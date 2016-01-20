@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>willzhang4a58&#39;s Personal Website</title>
+    <description>willzhang4a58&#39;s Personal Website</description>
+    <link>/</link>
+    <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Wed, 20 Jan 2016 21:18:37 +0800</pubDate>
+    <lastBuildDate>Wed, 20 Jan 2016 21:18:37 +0800</lastBuildDate>
+    <generator>Jekyll v3.0.1</generator>
+    
+      <item>
+        <title>Grammer Test</title>
+        <description>&lt;h2 id=&quot;c-code&quot;&gt;C++ Code&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;#include &amp;lt;stdio.h&amp;gt;
+int main() {
+    return 0;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;link&quot;&gt;Link&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation&quot;&gt;Latent Dirichlet allocation&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;mathjax&quot;&gt;Mathjax&lt;/h2&gt;
+
+&lt;p&gt;\begin{align}
+s_x
+\end{align}&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 10 Feb 2015 23:14:54 +0800</pubDate>
+        <link>/2015/02/10/welcome-to-jekyll/</link>
+        <guid isPermaLink="true">/2015/02/10/welcome-to-jekyll/</guid>
+        
+        
+        <category>others</category>
+        
+      </item>
+    
+  </channel>
+</rss>
