@@ -5,13 +5,19 @@
     <description>willzhang4a58&#39;s Personal Website</description>
     <link>/</link>
     <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Wed, 20 Jan 2016 21:19:26 +0800</pubDate>
-    <lastBuildDate>Wed, 20 Jan 2016 21:19:26 +0800</lastBuildDate>
+    <pubDate>Thu, 21 Jan 2016 20:56:46 +0800</pubDate>
+    <lastBuildDate>Thu, 21 Jan 2016 20:56:46 +0800</lastBuildDate>
     <generator>Jekyll v3.0.1</generator>
     
       <item>
         <title>Grammer Test</title>
-        <description>&lt;h2 id=&quot;c-code&quot;&gt;C++ Code&lt;/h2&gt;
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#c-code&quot; id=&quot;markdown-toc-c-code&quot;&gt;C++ Code&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#link&quot; id=&quot;markdown-toc-link&quot;&gt;Link&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#mathjax&quot; id=&quot;markdown-toc-mathjax&quot;&gt;Mathjax&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;c-code&quot;&gt;C++ Code&lt;/h2&gt;
 
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;#include &amp;lt;stdio.h&amp;gt;
 int main() {

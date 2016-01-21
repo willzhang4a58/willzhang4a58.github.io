@@ -6,6 +6,9 @@ categories: others
 comments: true
 ---
 
+* content
+{:toc}
+
 ## C++ Code
 
     #include <stdio.h>
