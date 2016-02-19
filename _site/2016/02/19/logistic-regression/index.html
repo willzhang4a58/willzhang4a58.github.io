@@ -5,10 +5,10 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Grammer Test</title>
+	<title>Logistic Regression</title>
 	<meta name="description" content="">
 	
-	<link rel="canonical" href="/2015/02/10/welcome-to-jekyll/">
+	<link rel="canonical" href="/2016/02/19/logistic-regression/">
 	<link rel="alternate" type="application/rss+xml" title="willzhang4a58's Personal Website" href="/feed.xml" />
 	
 	<!-- <link rel="stylesheet" href="/css/main.css"> -->
@@ -89,35 +89,84 @@
   <div id="myArticle" class="col-sm-9">
     <div class="post-area post">
       <header>
-        <h1>Grammer Test</h1>
-        <p>Feb 10, 2015</p>
+        <h1>Logistic Regression</h1>
+        <p>Feb 19, 2016</p>
       </header>
       <hr>
       <article>
         <ul id="markdown-toc">
-  <li><a href="#c-code" id="markdown-toc-c-code">C++ Code</a></li>
-  <li><a href="#link" id="markdown-toc-link">Link</a></li>
-  <li><a href="#mathjax" id="markdown-toc-mathjax">Mathjax</a></li>
+  <li><a href="#section" id="markdown-toc-section">1. 前言</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">2. 符号定义</a></li>
+  <li><a href="#section-2" id="markdown-toc-section-2">3. 优化目标</a></li>
+  <li><a href="#section-3" id="markdown-toc-section-3">4. 梯度</a></li>
+  <li><a href="#reference" id="markdown-toc-reference">5. Reference</a></li>
 </ul>
 
-<h2 id="c-code">C++ Code</h2>
+<h2 id="section">1. 前言</h2>
 
-<div class="highlighter-rouge"><pre class="highlight"><code>#include &lt;stdio.h&gt;
-int main() {
-    return 0;
-}
-</code></pre>
-</div>
+<p>Logistic Regression是业界最常见的分类算法之一。因其原理简单，且效果不错，被大量地应用于实际业务中。</p>
 
-<h2 id="link">Link</h2>
+<h2 id="section-1">2. 符号定义</h2>
 
-<p><a href="https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation">Latent Dirichlet allocation</a></p>
+<p>设有如下m个数据点
+\begin{align}
+{(x^{(1)}, y^{(1)}), (x^{(2)}, y^{(2)}), …, (x^{(m)}, y^{(m)})}
+\end{align}</p>
 
-<h2 id="mathjax">Mathjax</h2>
+<p>每个数据点包含特征x和类别y，其中
+\begin{align}
+x^{(i)}&amp;=[x^{(i)}_1, x^{(i)}_2, …, x^{(i)}_n]^T \\
+y^{(i)}&amp; \in \{0, 1\}
+\end{align}</p>
+
+<h2 id="section-2">3. 优化目标</h2>
+
+<p>Logistic Regression的目标是寻找一个函数完成从x到y的映射，如下
+\begin{align}
+h(x) = sigmoid(w^Tx+b)
+\end{align}</p>
+
+<p>w和b为Logistic Regression的参数，通过调整这两项参数使得预测的类别h(x)更贴近真实的类别的y<br />
+通常，对h(x)的概率解释是x对应的y为1的概率，因此1 - h(x)也就是对应的y为0的概率<br />
+因此，其似然函数为</p>
 
 <p>\begin{align}
-s_x
+L(w,b)=\prod_{i=1}^m{h(x^{(i)})}^{y^{(i)}}(1-h(x^{(i)}))^{1-y^{(i)}}
 \end{align}</p>
+
+<p>Logistic Regression的优化目标就是似然函数最大化</p>
+
+<p>实际应用中通常对似然函数取对数</p>
+
+<p>\begin{align}
+\ln L(w,b)&amp;=\sum_{i=1}^my^{(i)}\ln {h(x^{(i)})} + (1-y^{(i)})ln {(1-h(x^{(i)}))}
+\end{align}</p>
+
+<p>再乘-1则为最后的Cost Function</p>
+
+<p>\begin{align}
+Cost&amp;=\sum_{i=1}^m-y^{(i)}\ln {h(x^{(i)})} - (1-y^{(i)})ln {(1-h(x^{(i)}))}
+\end{align}</p>
+
+<h2 id="section-3">4. 梯度</h2>
+
+<p>无论是梯度下降，还是牛顿法，都需要计算梯度，因此本文也求解一下<br /></p>
+
+<p>求梯度</p>
+
+<p>\begin{align}
+\frac{\partial Cost}{\partial h(x^{(i)})} &amp;= -\frac{y^{(i)}}{h(x^{(i)})} - \frac{(1-y^{(i)})}{h(x^{(i)}) - 1} \\
+\frac{\partial h(x^{(i)})}{\partial w} &amp;= sigmoid’(w^Tx^{(i)}+b)x^{(i)} = h(x^{(i)})(1-h(x^{(i)}))x^{(i)}\\
+\frac{\partial h(x^{(i)})}{\partial b} &amp;= sigmoid’(w^Tx^{(i)}+b) = h(x^{(i)})(1-h(x^{(i)})) \\
+\frac{\partial Cost}{\partial w} &amp;= \sum_{i=1}^m\frac{\partial Cost}{\partial h(x^{(i)})}\frac{\partial h(x^{(i)})}{\partial w} = \sum_{i=1}^m  y^{(i)}(h(x^{(i)}) -1)x^{(i)} + (1-y^{(i)})  h(x^{(i)})x^{(i)} = \sum_{i=1}^m (h(x^{(i)})-y^{(i)})x^{(i)}  \\
+\frac{\partial Cost}{\partial b} &amp;= \sum_{i=1}^m\frac{\partial Cost}{\partial h(x^{(i)})}\frac{\partial h(x^{(i)})}{\partial b} = \sum_{i=1}^m  y^{(i)}(h(x^{(i)}) -1) + (1-y^{(i)})  h(x^{(i)}) = \sum_{i=1}^m h(x^{(i)})-y^{(i)}
+\end{align}</p>
+
+<h2 id="reference">5. Reference</h2>
+
+<ul>
+  <li><a href="https://en.wikipedia.org/wiki/Logistic_regression">Wiki——Logistic Regression</a></li>
+</ul>
 
 
       </article>
@@ -179,7 +228,7 @@ s_x
             Github
           </a>
           <span class="point"> · </span>
-          <span><a href="https://github.com/willzhang4a58/willzhang4a58.github.io/blob/master/_posts/machine learning/2015-02-10-welcome-to-jekyll.markdown">View source</a></span>
+          <span><a href="https://github.com/willzhang4a58/willzhang4a58.github.io/blob/master/_posts/machine learning/2016-02-19-logistic-regression.markdown">View source</a></span>
           <span class="point"> · </span>
           <span><a class="newpost" href="javascript:;">New post</a></span>
 		  <span class="point"> · </span>
