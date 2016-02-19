@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Logistic Regression"
-date: "2016-02-19 21:47:24"
+date: 2016-02-18 21:47:24
 categories: Machine&nbsp;Learning
 comments: true
 ---
