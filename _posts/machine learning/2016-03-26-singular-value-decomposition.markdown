@@ -193,7 +193,9 @@ a_m \sigma_m v_m^Tv_m \\\
 则\begin{align}x = a_1\sigma_1v_1^Tv_1u_1 + a_2\sigma_2v_2^Tv_2u_2 + ... + a_m\sigma_mv_m^Tv_mu_m\end{align}
 
 由上式，可以这么理解线性变换
+
 首先将n维向量使用矩阵的右奇异向量作为基表示，再将每个维度映射到一个左奇异向量基
+
 奇异值则可以认为是输入与输出间进行的标量的膨胀控制。
 
 # 4. Reference

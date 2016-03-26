@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>willzhang4a58&#39;s Personal Website</title>
+    <description>willzhang4a58&#39;s Personal Website</description>
+    <link>/</link>
+    <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sat, 26 Mar 2016 16:33:46 +0800</pubDate>
+    <lastBuildDate>Sat, 26 Mar 2016 16:33:46 +0800</lastBuildDate>
+    <generator>Jekyll v3.1.1</generator>
+    
+      <item>
+        <title>Singular Value Decomposition</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#section&quot; id=&quot;markdown-toc-section&quot;&gt;1. 对矩阵基本的理解&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-1&quot; id=&quot;markdown-toc-section-1&quot;&gt;2. 特征值与特征向量&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-2&quot; id=&quot;markdown-toc-section-2&quot;&gt;3. 奇异值分解&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#reference&quot; id=&quot;markdown-toc-reference&quot;&gt;4. Reference&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;section&quot;&gt;1. 对矩阵基本的理解&lt;/h2&gt;
+
+&lt;p&gt;一个m行n列的矩阵，符号标记为M，其可以被视为线性变换的便利表达法&lt;/p&gt;
+
+&lt;p&gt;比如，有一个n维向量x，则通过矩阵乘法&lt;script type=&quot;math/tex&quot;&gt;Mx=y&lt;/script&gt;便可以得到一个m维向量y&lt;/p&gt;
+
+&lt;p&gt;矩阵M记录了一个从n维空间到m维空间的一个线性变换&lt;/p&gt;
+
+&lt;p&gt;为了方便，以下考虑的均是理想情况&lt;/p&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;2. 特征值与特征向量&lt;/h2&gt;
+
+&lt;p&gt;M是一个n行n列的方阵&lt;/p&gt;
+
+&lt;p&gt;若有&lt;script type=&quot;math/tex&quot;&gt;\lambda,v&lt;/script&gt;满足&lt;script type=&quot;math/tex&quot;&gt;Mv=\lambda v&lt;/script&gt;，其中，&lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt;为数值，&lt;script type=&quot;math/tex&quot;&gt;v&lt;/script&gt;为n维向量&lt;/p&gt;
+
+&lt;p&gt;则称&lt;script type=&quot;math/tex&quot;&gt;v&lt;/script&gt;为矩阵M的特征向量，且对应一个特征值&lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;特征向量经过线性变换后不改变方向，可以将特征向量视为这个线性变换的基&lt;/p&gt;
+
+&lt;p&gt;特征值可视为这个线性变换在这个基上的权重&lt;/p&gt;
+
+&lt;p&gt;令矩阵M有n个线性无关的特征向量&lt;script type=&quot;math/tex&quot;&gt;v_1,v_2,...,v_n&lt;/script&gt;，对应的特征值为&lt;script type=&quot;math/tex&quot;&gt;\lambda_1,\lambda_2,...,\lambda_n&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;且满足
+\begin{align}
+\lambda_1 \geq \lambda_2 \geq … \geq \lambda_n
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;则有&lt;/p&gt;
+
+&lt;p&gt;\begin{align}
+M * \begin{bmatrix} v_1 &amp;amp; v_2 &amp;amp; … &amp;amp; v_n \end{bmatrix} = 
+\begin{bmatrix}\lambda_1 v_1 &amp;amp; \lambda_2 v_2 &amp;amp; … &amp;amp; \lambda_n v_n \end{bmatrix}=
+\begin{bmatrix} v_1 &amp;amp; v_2 &amp;amp; … &amp;amp; v_n \end{bmatrix}
+\begin{bmatrix}
+\lambda_1 &amp;amp; 0 &amp;amp; … &amp;amp; 0 \\
+0 &amp;amp; \lambda_2 &amp;amp; … &amp;amp; 0 \\
+… &amp;amp; … &amp;amp; … &amp;amp; … \\
+0 &amp;amp; 0 &amp;amp; 0 &amp;amp; \lambda_n
+\end{bmatrix}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;令
+\begin{align}
+V &amp;amp;= \begin{bmatrix} v_1 &amp;amp; v_2 &amp;amp; … &amp;amp; v_n \end{bmatrix} \\
+\Lambda &amp;amp;=
+\begin{bmatrix}
+\lambda_1 &amp;amp; 0 &amp;amp; … &amp;amp; 0 \\
+0 &amp;amp; \lambda_2 &amp;amp; … &amp;amp; 0 \\
+… &amp;amp; … &amp;amp; … &amp;amp; … \\
+0 &amp;amp; 0 &amp;amp; 0 &amp;amp; \lambda_n
+\end{bmatrix}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;则有&lt;/p&gt;
+
+&lt;p&gt;\begin{align}
+M = V \Lambda V^{-1}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;上式称为特征值分解&lt;/p&gt;
+
+&lt;h2 id=&quot;section-2&quot;&gt;3. 奇异值分解&lt;/h2&gt;
+
+&lt;p&gt;特征值分解只适用于方阵，对于普通的m行n列矩阵，则使用奇异值分解&lt;/p&gt;
+
+&lt;p&gt;令&lt;script type=&quot;math/tex&quot;&gt;u_1,u_2,...,u_m&lt;/script&gt;为矩阵&lt;script type=&quot;math/tex&quot;&gt;M*M^T&lt;/script&gt;的特征向量, 称为左奇异向量&lt;/p&gt;
+
+&lt;p&gt;令&lt;script type=&quot;math/tex&quot;&gt;v_1,v_2,...,v_n&lt;/script&gt;为矩阵&lt;script type=&quot;math/tex&quot;&gt;M^T*M&lt;/script&gt;的特征向量，称为右奇异向量&lt;/p&gt;
+
+&lt;p&gt;令
+\begin{align}
+U &amp;amp;= \begin{bmatrix}
+u_1 &amp;amp; u_2 &amp;amp; … &amp;amp; u_m
+\end{bmatrix} \\
+V &amp;amp;= \begin{bmatrix}
+v_1 &amp;amp; v_2 &amp;amp; … &amp;amp; v_n
+\end{bmatrix}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;直接上定义
+\begin{align}
+M = 
+\begin{bmatrix}
+u_1 &amp;amp; u_2 &amp;amp; … &amp;amp; u_m
+\end{bmatrix}
+\begin{bmatrix}
+\sigma_1 &amp;amp; 0 &amp;amp; … \\
+0 &amp;amp; \sigma_2 &amp;amp; … \\
+… &amp;amp; … &amp;amp; …
+\end{bmatrix}
+\begin{bmatrix}
+v_1^T \\
+v_2^T \\
+… \\
+v_n^T
+\end{bmatrix}
+\end{align}
+其中
+\begin{align}
+\Sigma= 
+\begin{bmatrix}
+\sigma_1 &amp;amp; 0 &amp;amp; … \\
+0 &amp;amp; \sigma_2 &amp;amp; … \\
+… &amp;amp; … &amp;amp; …
+\end{bmatrix}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;为m行n列的对角矩阵，对角线上的值称为奇异值&lt;/p&gt;
+
+&lt;p&gt;设有n维向量，则其可表示为
+\begin{align}
+x = a_1 v_1 + a_2 v_2 + … + a_n v_n
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;接下来一步步模拟线性变换的过程，首先左乘&lt;script type=&quot;math/tex&quot;&gt;V^T&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;\begin{align}
+\begin{bmatrix}
+v_1^T \\
+v_2^T \\
+… \\
+v_n^T
+\end{bmatrix}x =
+\begin{bmatrix}
+a_1v_1^Tv_1 \\
+a_2v_2^Tv_2 \\
+… \\
+a_nv_n^Tv_n \\
+\end{bmatrix}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;接着左乘&lt;script type=&quot;math/tex&quot;&gt;\Lambda&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;如果&lt;script type=&quot;math/tex&quot;&gt;m &gt; n&lt;/script&gt;
+\begin{align}
+\begin{bmatrix}
+\sigma_1 &amp;amp; 0 &amp;amp; … \\
+0 &amp;amp; \sigma_2 &amp;amp; … \\
+… &amp;amp; … &amp;amp; …
+\end{bmatrix}
+\begin{bmatrix}
+a_1v_1^Tv_1 \\
+a_2v_2^Tv_2 \\
+… \\
+a_nv_n^Tv_n \\
+\end{bmatrix} = 
+\begin{bmatrix}
+a_1 \sigma_1 v_1^Tv_1 \\
+a_2 \sigma_2 v_2^Tv_2 \\
+… \\
+a_n \sigma_n v_n^Tv_n \\
+… \\
+0 \\
+0
+\end{bmatrix}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;则\begin{align}x = a_1\sigma_1v_1^Tv_1u_1 + a_2\sigma_2v_2^Tv_2u_2 + … + a_n\sigma_nv_n^Tv_nu_n\end{align}&lt;/p&gt;
+
+&lt;p&gt;如果 &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+m &lt; n %]]&gt;&lt;/script&gt;
+\begin{align}
+\begin{bmatrix}
+\sigma_1 &amp;amp; 0 &amp;amp; … \\
+0 &amp;amp; \sigma_2 &amp;amp; … \\
+… &amp;amp; … &amp;amp; …
+\end{bmatrix}
+\begin{bmatrix}
+a_1v_1^Tv_1 \\
+a_2v_2^Tv_2 \\
+… \\
+a_nv_n^Tv_n \\
+\end{bmatrix} = 
+\begin{bmatrix}
+a_1 \sigma_1 v_1^Tv_1 \\
+a_2 \sigma_2 v_2^Tv_2 \\
+… \\
+a_m \sigma_m v_m^Tv_m \\
+\end{bmatrix}
+\end{align}
+则\begin{align}x = a_1\sigma_1v_1^Tv_1u_1 + a_2\sigma_2v_2^Tv_2u_2 + … + a_m\sigma_mv_m^Tv_mu_m\end{align}&lt;/p&gt;
+
+&lt;p&gt;由上式，可以这么理解线性变换&lt;/p&gt;
+
+&lt;p&gt;首先将n维向量使用矩阵的右奇异向量作为基表示，再将每个维度映射到一个左奇异向量基&lt;/p&gt;
+
+&lt;p&gt;奇异值则可以认为是输入与输出间进行的标量的膨胀控制。&lt;/p&gt;
+
+&lt;h1 id=&quot;reference&quot;&gt;4. Reference&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://zh.wikipedia.org/wiki/%E7%89%B9%E5%BE%81%E5%88%86%E8%A7%A3&quot;&gt;Wiki-特征分解&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://zh.wikipedia.org/wiki/%E5%A5%87%E5%BC%82%E5%80%BC%E5%88%86%E8%A7%A3&quot;&gt;Wiki——奇异值分解&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Fri, 25 Mar 2016 21:56:53 +0800</pubDate>
+        <link>/2016/03/25/singular-value-decomposition/</link>
+        <guid isPermaLink="true">/2016/03/25/singular-value-decomposition/</guid>
+        
+        
+        <category>Machine&amp;nbsp;Learning</category>
+        
+      </item>
+    
+      <item>
+        <title>Logistic Regression</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#section&quot; id=&quot;markdown-toc-section&quot;&gt;1. 前言&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-1&quot; id=&quot;markdown-toc-section-1&quot;&gt;2. 符号定义&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-2&quot; id=&quot;markdown-toc-section-2&quot;&gt;3. 优化目标&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-3&quot; id=&quot;markdown-toc-section-3&quot;&gt;4. 梯度&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#reference&quot; id=&quot;markdown-toc-reference&quot;&gt;5. Reference&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;section&quot;&gt;1. 前言&lt;/h2&gt;
+
+&lt;p&gt;Logistic Regression是业界最常见的分类算法之一。因其原理简单，且效果不错，被大量地应用于实际业务中。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;2. 符号定义&lt;/h2&gt;
+
+&lt;p&gt;设有如下m个数据点
+\begin{align}
+{(x^{(1)}, y^{(1)}), (x^{(2)}, y^{(2)}), …, (x^{(m)}, y^{(m)})}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;每个数据点包含特征x和类别y，其中
+\begin{align}
+x^{(i)}&amp;amp;=[x^{(i)}_1, x^{(i)}_2, …, x^{(i)}_n]^T \\
+y^{(i)}&amp;amp; \in \{0, 1\}
+\end{align}&lt;/p&gt;
+
+&lt;h2 id=&quot;section-2&quot;&gt;3. 优化目标&lt;/h2&gt;
+
+&lt;p&gt;Logistic Regression的目标是寻找一个函数完成从x到y的映射，如下
+\begin{align}
+h(x) = sigmoid(w^Tx+b)
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;w和b为Logistic Regression的参数，通过调整这两项参数使得预测的类别h(x)更贴近真实的类别的y&lt;br /&gt;
+通常，对h(x)的概率解释是x对应的y为1的概率，因此1 - h(x)也就是对应的y为0的概率&lt;br /&gt;
+因此，其似然函数为&lt;/p&gt;
+
+&lt;p&gt;\begin{align}
+L(w,b)=\prod_{i=1}^m{h(x^{(i)})}^{y^{(i)}}(1-h(x^{(i)}))^{1-y^{(i)}}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;Logistic Regression的优化目标就是似然函数最大化&lt;/p&gt;
+
+&lt;p&gt;实际应用中通常对似然函数取对数&lt;/p&gt;
+
+&lt;p&gt;\begin{align}
+\ln L(w,b)&amp;amp;=\sum_{i=1}^my^{(i)}\ln {h(x^{(i)})} + (1-y^{(i)})ln {(1-h(x^{(i)}))}
+\end{align}&lt;/p&gt;
+
+&lt;p&gt;再乘-1则为最后的Cost Function&lt;/p&gt;
+
+&lt;p&gt;\begin{align}
+Cost&amp;amp;=\sum_{i=1}^m-y^{(i)}\ln {h(x^{(i)})} - (1-y^{(i)})ln {(1-h(x^{(i)}))}
+\end{align}&lt;/p&gt;
+
+&lt;h2 id=&quot;section-3&quot;&gt;4. 梯度&lt;/h2&gt;
+
+&lt;p&gt;无论是梯度下降，还是牛顿法，都需要计算梯度，因此本文也求解一下&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;求梯度&lt;/p&gt;
+
+&lt;p&gt;\begin{align}
+\frac{\partial Cost}{\partial h(x^{(i)})} &amp;amp;= -\frac{y^{(i)}}{h(x^{(i)})} - \frac{(1-y^{(i)})}{h(x^{(i)}) - 1} \\
+\frac{\partial h(x^{(i)})}{\partial w} &amp;amp;= sigmoid’(w^Tx^{(i)}+b)x^{(i)} = h(x^{(i)})(1-h(x^{(i)}))x^{(i)}\\
+\frac{\partial h(x^{(i)})}{\partial b} &amp;amp;= sigmoid’(w^Tx^{(i)}+b) = h(x^{(i)})(1-h(x^{(i)})) \\
+\frac{\partial Cost}{\partial w} &amp;amp;= \sum_{i=1}^m\frac{\partial Cost}{\partial h(x^{(i)})}\frac{\partial h(x^{(i)})}{\partial w} = \sum_{i=1}^m  y^{(i)}(h(x^{(i)}) -1)x^{(i)} + (1-y^{(i)})  h(x^{(i)})x^{(i)} = \sum_{i=1}^m (h(x^{(i)})-y^{(i)})x^{(i)}  \\
+\frac{\partial Cost}{\partial b} &amp;amp;= \sum_{i=1}^m\frac{\partial Cost}{\partial h(x^{(i)})}\frac{\partial h(x^{(i)})}{\partial b} = \sum_{i=1}^m  y^{(i)}(h(x^{(i)}) -1) + (1-y^{(i)})  h(x^{(i)}) = \sum_{i=1}^m h(x^{(i)})-y^{(i)}
+\end{align}&lt;/p&gt;
+
+&lt;h2 id=&quot;reference&quot;&gt;5. Reference&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Logistic_regression&quot;&gt;Wiki——Logistic Regression&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Fri, 19 Feb 2016 05:47:24 +0800</pubDate>
+        <link>/2016/02/19/logistic-regression/</link>
+        <guid isPermaLink="true">/2016/02/19/logistic-regression/</guid>
+        
+        
+        <category>Machine&amp;nbsp;Learning</category>
+        
+      </item>
+    
+  </channel>
+</rss>
