@@ -188,7 +188,7 @@ J=log[g(X_w^T\theta^w)]+\sum\limits_{u\in NEG(w)}log[1-g(X_w^T\theta^u)]
 \zeta=\sum\limits_{w\in C}\sum\limits_{u\in Context(w)}\left\\{log[g({v(w)}^T\theta^u)]+\sum\limits_{z\in NEG(u)}log[1-g({v(w)}^T\theta^z)]\right\\}
 \end{align}
 
-###3.3 负采样算法
+### 3.3 负采样算法
 
 带权采样，语料中的频率越大，词的选取概率越大。
 Google的word2vec中的概率为
