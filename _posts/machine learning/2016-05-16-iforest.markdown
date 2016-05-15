@@ -1,0 +1,70 @@
+---
+layout: post
+title:  "Isolation Forest"
+date: 2016-05-14 16:24:11
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Isolation Tree
+
+用T表示Isolation Tree的一个节点，如果T是非叶节点，则一定有两个子节点$$(T_l,T_r)$$，且记录了一个特征$$q$$和一个值$$p$$，特征$$q$$的值小于p的数据点划分到$$T_l$$，否则划分到$$T_r$$
+
+用h(x)表示数据点x落到的叶节点距离根节点的距离
+设定有n个数据点，数据点是d维
+使用c(n)表示h(x)的均值
+
+\begin{align}
+c(n)=2H(n-1)-\frac{2(n-1)}{n}
+\end{align}
+
+$$H(i)$$是谐波数
+\begin{align}
+H(i)\approx \ln(i)+0.5772156649
+\end{align}
+
+Anomaly分数定义为
+
+\begin{align}
+s(x,n)=2^{-\frac{E(h(x))}{c(n)}}
+\end{align}
+
+$$E(h(x))$$是多个iTree的$$h(x)$$的均值
+
+因此
+
+* 如果数据点的$$s$$接近1，判定为异常点
+* 如果数据点的$$s$$小于0.5，可以认为是非常正常的数据点
+* 如果所有数据点的$$s$$都在0.5附近，那么不存在任何异常点
+
+## 2. Characteristic of Isolation Trees
+
+异常点密集处导致$$h(x)$$偏大，iForest难于检测
+因此需要采样降低异常点的密度，相比于全量构造，更快且效果更好。
+
+## 3. Anomaly Detection using iForest
+
+### 3.1 Training
+
+* Input: 输入数据$$X$$，森林大小$$t$$，采样大小$$\varphi$$
+* Output: 森林
+* 步骤：
+    * 初始化
+    * 设定树高限制$$l=ceiling(\log_2\varphi)$$ 
+    * 迭代t次
+        * 取样生成子集$$X'$$
+        * 生成新的iTree
+
+限制树高，是因为我们只关心小于平均高度的节点。
+根据经验值，$$\varphi=256，t=100$$
+
+### 3.2 Evaluating Stage
+
+令$$e$$为实际长度
+由于限制了树高，实际计算$$h(x)$$时
+\begin{align}
+h(x)=e+c(\varphi)
+\end{align}
