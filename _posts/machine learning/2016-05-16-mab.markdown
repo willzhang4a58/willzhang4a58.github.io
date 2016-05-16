@@ -1,0 +1,50 @@
+---
+layout: post
+title:  "Multi-Armed Bandit"
+date: 2016-05-15 17:02:11 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Multi-Armed Bandit
+
+在赌徒面前有一排老虎机，选择任意一台老虎机后，该台老虎机会给一个数值奖励，每台老虎机给的数值奖励服从一个单独的概率分布
+
+赌徒并不知道每台老虎机的概率分布，赌徒的目标是最大化玩T次后得到的总奖励
+
+这就是Multi-Armed Bandit问题，在线推荐可以直接套用这个问题
+
+在线推荐的问题中，我们也有一堆的老虎机（商品/广告），选择一个物品，会得到一个奖励（用户购买/点击等）
+
+在线推荐的目标也是最大化这个总奖励
+
+在实际的在线推荐中，通常我们还会有一个特征向量描述当时的上下文场景（用户历史行为、天气等）
+
+每次决策时，需要额外利用这个特征向量的信息，这种Multi-Armed Bandit的变种称为Contextual Bandit
+
+## 2. 公式化描述
+
+一个处理Contextual Bandit问题的算法流程如下
+
+* For t = 1,2,3,...
+    * 获取老虎机集合$$A_t$$，对每台老虎机$$a$$，获取所有的上下文向量（特征向量）$$x_{t,a}$$
+    * 选择一个老虎机$$a_t$$作为本轮的选择，随后得到本轮的奖励$$r_{t,a_t}$$
+    * 使用新的观测值$$(x_{t,a_t},a_t,r_{t,a_t})$$和历史的观测值调整策略
+
+于是，我们可以定义T轮的总奖励为$$\sum_{t=1}^Tr_{t,a_t}$$
+
+定义第t轮时最大奖励对应的老虎机为$$a_t^*$$，那么可以定义最优的T轮总奖励为$$\sum_{t=1}^Tr_{t,a_t^*}$$
+
+这个差值称为regret，定义T轮regret
+
+\begin{align}
+R_A(T) = E\left\[\sum_{t=1}^Tr_{t,a_t}\right\]-E\left\[\sum_{t=1}^Tr_{t,a_t^*}\right\]
+\end{align}
+
+最大化奖励，也就是最小化regret了
+
+## 3. 一些比较naive的方法
+
