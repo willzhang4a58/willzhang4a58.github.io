@@ -43,6 +43,28 @@ UCB的难点在于如何设定置信上界，设定方法有很多种，这里�
 
 ## 2. LinUCB
 
+### 2.1 Disjoint
 
+[上一篇文章]中提到了Contextual Bandit，在Multi-Armed Bandit的基础上每次做决策时还会有一个特征向量
+
+LinUCB是处理Contextual Bandit的一个方法，在LinUCB中，设定
+
+\begin{align}
+E\left\[r_{t,a}|x_{t,a}\right] = x_{t,a}^T\theta_a^*
+\end{align}
+
+$$\theta_a^*$$是LinUCB模型的参数
+
+每个arm维护一个$$\theta_a^*$$，因此这个称为Disjoint Model
+
+对于单个arm，以其前m个context向量为行向量组成的矩阵称为$$D_a$$
+
+前m个reward组成的向量称为$$c_a$$
+
+使用ridge regression，可以得到一个解$$\hat{\theta}_a$$		
+
+\begin{align}
+\hat{\theta}_a = (D_a^TD_a + I_d)^{-1}D_a^Tc_a
+\end{align}
 
 [上一篇文章]: /2016/05/16/mab
