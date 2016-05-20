@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "LinUCB"
-date: 2016-05-16 16:03:42
+date: 2016-05-19 13:03:21
 categories: Machine&nbsp;Learning
 comments: true
 ---
@@ -43,28 +43,64 @@ UCB的难点在于如何设定置信上界，设定方法有很多种，这里�
 
 ## 2. LinUCB
 
-### 2.1 Disjoint
-
 [上一篇文章]中提到了Contextual Bandit，在Multi-Armed Bandit的基础上每次做决策时还会有一个特征向量
 
 LinUCB是处理Contextual Bandit的一个方法，在LinUCB中，设定
 
 \begin{align}
-E\left\[r_{t,a}|x_{t,a}\right] = x_{t,a}^T\theta_a^*
+E\left\[r_{t,a}|x_{t,a}\right] = x_{t,a}^T\theta_a
 \end{align}
 
-$$\theta_a^*$$是LinUCB模型的参数
+$$\theta_a$$是LinUCB模型的参数，维度为$$d$$
 
-每个arm维护一个$$\theta_a^*$$，因此这个称为Disjoint Model
+每个arm维护一个$$\theta_a$$
 
 对于单个arm，以其前m个context向量为行向量组成的矩阵称为$$D_a$$
 
 前m个reward组成的向量称为$$c_a$$
 
-使用ridge regression，可以得到一个解$$\hat{\theta}_a$$		
+使用[ridge regression]，可以得到$$\theta_a$$的概率分布为高斯分布
 
 \begin{align}
-\hat{\theta}_a = (D_a^TD_a + I_d)^{-1}D_a^Tc_a
+\theta_a \sim N \left\((D_a^TD_a + I)^{-1}D_a^Tc_a, (D_a^TD_a + I)^{-1}\right\)
 \end{align}
 
+为了符号简洁，令
+
+\begin{align}
+\hat{\theta}_a &= (D_a^TD_a + I)^{-1}D_a^Tc_a \\\
+A_a &= D_a^TD_a + I
+\end{align}
+
+于是$$\theta_a$$的概率分布可表示为$$\theta_a \sim N(\hat{\theta}_a, A_a^{-1})$$
+
+于是在第t次时可以得到$$x_{t,a}^T\theta_a \sim N(x_{t,a}^T\hat{\theta}_a, x_{t,a}^TA_a^{-1}x_{t,a})$$，也就是$$r_{t,a} \sim N(x_{t,a}^T\hat{\theta}_a, x_{t,a}^TA_a^{-1}x_{t,a})$$
+
+根据高斯分布的性质，其$$1-\delta$$的置信区间为
+
+\begin{align}
+\left\[ x\_{t,a}^T\hat{\theta}\_a - \alpha\sqrt{x\_{t,a}^TA\_a^{-1}x\_{t,a}} \quad , \quad x\_{t,a}^T\hat{\theta}\_a + \alpha\sqrt{x\_{t,a}^TA\_a^{-1}x\_{t,a}}\right\]
+\end{align}
+
+其中$$\alpha = 1 + \sqrt{\frac{ln(2/\delta)}{2}}$$
+
+得到置信上界后就可以使用普通UCB规则了
+
+需要注意的是，$$A_a与D_a^Tc_a$$可以增量更新，于是标准流程如下
+
+* 设定$$\alpha$$
+* For t = 1,2,3,...
+	* 对所有的arm获得本次的context向量
+	* For all $$a$$
+		* if $$a$$ is new
+			* 设置$$A_a$$为单位矩阵
+			* 设置$$b_a$$为$$d$$维0零向量
+		* 计算$$\hat{\theta}_a = A_a^{-1}b_a$$
+		* 计算上界
+	* 选择最大上界对应的arm即$$a_t$$，并得到对应的$$r_t$$
+	* 更新$$A_{a_t} = A_{a_t} + x_{t,a_t}x_{t,a_t}^T$$
+	* 更新$$b_{a_t} = b_{a_t} + r_tx_{t,a_t}$$
+
+
 [上一篇文章]: /2016/05/16/mab
+[ridge regression]: /2016/05/18/ridge-regression/
