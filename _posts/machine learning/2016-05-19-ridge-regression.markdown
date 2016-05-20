@@ -135,8 +135,6 @@ b_n &= b_0 + \frac{y^Ty+\mu_0^T\Lambda_0\mu_0-\mu_n^T\Lambda_n\mu_n}{2}
 P(\beta,\sigma^2|y,X) \propto \left\[\sigma^{-k}exp\left\( -\frac{(\beta-\mu_n)^T\Lambda_n(\beta-\mu_n)}{2\sigma^2} \right\)\right\] \left\[(\sigma^2)^{-a_n-1} exp \left\( -\frac{b_n}{\sigma^2} \right\)\right\]
 \end{align}
 
-由上式可以看出后验概率$$\beta \sim N(\mu_n, \Lambda_n^{-1})$$
-
 ## 4. Ridge Regression
 
 当$$\mu_0=0,\Lambda_0=cI$$时称为Ridge Regression
