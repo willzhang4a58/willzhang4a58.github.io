@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Decision Tree</title>
+	<meta name="description" content="">
+	
+	<link rel="canonical" href="/2016/05/20/decision-tree/">
+	<link rel="alternate" type="application/rss+xml" title="willzhang4a58's Personal Website" href="/feed.xml" />
+	
+	<!-- <link rel="stylesheet" href="/css/main.css"> -->
+
+	<link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css">
+	<!-- <link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/fontawesome/4.2.0/css/font-awesome.min.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css"> -->
+	
+
+	<link rel="stylesheet" type="text/css" href="/static/css/index.css">
+	
+	<!-- <script type="text/javascript" src="/static/js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="/static/js/bootstrap.min.js"></script> -->
+
+	<script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script type="text/javascript" src="http://apps.bdimg.com/libs/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+
+	<script type="text/javascript" src="/static/js/index.js"></script>
+	
+	<link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/highlight.js/8.4/styles/monokai_sublime.min.css">
+	<!-- <link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/highlight.js/8.4/styles/railscasts.min.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/highlight.js/8.4/styles/monokai.min.css"> -->
+	<!-- <script type="text/javascript" src="http://apps.bdimg.com/libs/highlight.js/8.4/languages/dos.min.js"></script> -->
+	<script type="text/javascript" src="http://apps.bdimg.com/libs/highlight.js/8.4/highlight.min.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>
+
+</head>
+
+ <!--  <body data-spy="scroll" data-target="#myAffix"> -->
+  <body>
+
+    <header>
+
+<!-- navbar -->
+  <nav class="navbar navbar-inverse">
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">willzhang4a58's Personal Website</a>
+      <p class="navbar-text"></p>
+    </div>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav navbar-right">
+
+        
+          <li>
+        
+        <a href="/"><span class="glyphicon glyphicon-th-large"></span> Blog</a></li>
+
+        
+          
+            
+              <li>
+            
+            <a href="/about/"><span class="glyphicon glyphicon-heart"></span> About</a></li>
+          
+        
+          
+        
+          
+        
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+
+</header>
+
+    <div id="main" class="container main">
+      <div class="row">
+  <div id="myArticle" class="col-sm-9">
+    <div class="post-area post">
+      <header>
+        <h1>Decision Tree</h1>
+        <p>May 20, 2016</p>
+      </header>
+      <hr>
+      <article>
+        <ul id="markdown-toc">
+  <li><a href="#intuition" id="markdown-toc-intuition">1. Intuition</a></li>
+  <li><a href="#section" id="markdown-toc-section">2. 构建流程</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">3. 分裂规则</a>    <ul>
+      <li><a href="#section-2" id="markdown-toc-section-2">3.1 信息增益</a></li>
+      <li><a href="#section-3" id="markdown-toc-section-3">3.2 增益率</a></li>
+      <li><a href="#section-4" id="markdown-toc-section-4">3.3 基尼指数</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="intuition">1. Intuition</h2>
+
+<p>决策树是一种分类算法，其模型为树结构</p>
+
+<p>每个非叶节点代表一个测试，而每个叶节点都与一个类别相关</p>
+
+<p>其对单个样本的分类过程从最上的根节点开始，根据测试结果往下走，直到走到叶节点</p>
+
+<p>这样这个样本就被决策树预测了类别，一个例子如下</p>
+
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/CART_tree_titanic_survivors.png" alt="" /></p>
+
+<h2 id="section">2. 构建流程</h2>
+
+<p>大部分决策树构建算法都是自顶向下构建的</p>
+
+<p>根节点处理全部的数据，并将其划分为多个子集，传给其子节点</p>
+
+<p>子节点处理其接收到的数据，再次划分，这样递归下去完成决策树的构建</p>
+
+<p>其单个节点的构建详细流程如下</p>
+
+<ul>
+  <li>接收本节点的数据D</li>
+  <li>if D中所有的数据都是一个类别
+    <ul>
+      <li>将本节点设定为叶节点，并将其类别标注为<script type="math/tex">D</script>的类别</li>
+      <li>结束</li>
+    </ul>
+  </li>
+  <li>使用<strong>某种分裂规则</strong>将D划分为若干个子集</li>
+  <li>对所有的子集
+    <ul>
+      <li>创建子树</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>某种分裂规则</strong>是指选择某个特征，并以该特征的值作为划分数据子集的依据</p>
+
+<p>通常这种准则，应使得各个子集尽可能只有一个类别</p>
+
+<h2 id="section-1">3. 分裂规则</h2>
+
+<p>这里介绍三个比较常见的分裂依据，分别为信息增益、增益率、基尼指数</p>
+
+<p>设数据<script type="math/tex">D</script>中的类别有<script type="math/tex">m</script>个，第<script type="math/tex">i</script>个类别以<script type="math/tex">C_i</script>表示</p>
+
+<p><script type="math/tex">C_{i,D}</script>是<script type="math/tex">D</script>中<script type="math/tex">C_i</script>类数据的集合</p>
+
+<h3 id="section-2">3.1 信息增益</h3>
+
+<p>ID3使用信息增益作为分裂依据</p>
+
+<p>数据D的熵为</p>
+
+<p>\begin{align}
+Entropy(D) = -\sum_{i=1}^mp_i\log_2(p_i)
+\end{align}</p>
+
+<p><script type="math/tex">p_i</script>表示类别<script type="math/tex">i</script>在数据<script type="math/tex">D</script>中的概率，可以设定为</p>
+
+<p>\begin{align}p_i=\frac{|C_{i,D}|}{|D|}
+\end{align}</p>
+
+<p>假定选择特征<script type="math/tex">A</script>对数据<script type="math/tex">D</script>进行划分</p>
+
+<p>先假定<script type="math/tex">A</script>是离散特征，在数据<script type="math/tex">D</script>中<script type="math/tex">A</script>的所有可能取值有<script type="math/tex">v</script>个，第<script type="math/tex">i</script>个取值为<script type="math/tex">a_v</script></p>
+
+<p>于是很自然地划分出<script type="math/tex">v</script>个子集，第<script type="math/tex">i</script>个子集称为<script type="math/tex">D_i</script></p>
+
+<p>划分后的熵可以定义为</p>
+
+<p>\begin{align}
+Entropy_A(D) = \sum_{j=1}^v\frac{|D_j|}{|D|}Entropy(D_j)
+\end{align}</p>
+
+<p>信息增益定义为</p>
+
+<p>\begin{align}
+Gain(A) = Entropy(D) - Entropy_A(D)
+\end{align}</p>
+
+<p>显然，<script type="math/tex">Gain(A)</script>表示通过划分，不确定性减少的程度</p>
+
+<p>于是我们要选择使得信息增益最大的特征进行划分</p>
+
+<p>上面考虑的是A是离散值的情况下</p>
+
+<p>实际上，在A是连续值的情况下，在分裂时是选择一个阈值</p>
+
+<p>特征的值小于等于阈值的划分为一个子集，大于阈值的划分为另一个子集</p>
+
+<h3 id="section-3">3.2 增益率</h3>
+
+<p>ID3有一个缺点，倾向于划分出更多的子集。</p>
+
+<p>极端情况下，将数据D划分为一条数据一个子集，但是这种划分对于分类并没有用</p>
+
+<p>C4.5是ID3的后继者，引入一个参数用于改善这种缺点</p>
+
+<p>引入一个称为split information的值</p>
+
+<p>对特征A做划分的split information为</p>
+
+<p>\begin{align}
+SplitInfo_A(D) = -\sum_{j=1}^v\frac{|D_j|}{|D|}\log_2\left(\frac{|D_j|}{|D|}\right)
+\end{align}</p>
+
+<p>容易发现，这其实是个熵，划分出的子集个数越多，这个split information越大</p>
+
+<p>而增益率定义为</p>
+
+<p>\begin{align}
+GrainRate(A) = \frac{Gain(A)}{SplitInfo_A(D)}
+\end{align}</p>
+
+<p>选择最大增益率的特征进行分裂，这种方法就是C4.5</p>
+
+<h3 id="section-4">3.3 基尼指数</h3>
+
+<p>CART使用基尼指数作为划分依据</p>
+
+<p>基尼指数度量数据D的不纯度（数据纯意味这所有数据都是一个类别）</p>
+
+<p>\begin{align}
+Gini(D) = 1 - \sum_{i=1}^mp_i^2
+\end{align}</p>
+
+<p>CART对于离散值和连续值特征都是划分为两个子集</p>
+
+<p>设划分为两个子集<script type="math/tex">D_1</script>和<script type="math/tex">D_2</script></p>
+
+<p>划分后的基尼指数设定为</p>
+
+<p>\begin{align}
+Gini_A(D) = \frac{|D_1|}{|D|}Gini(D_1) + \frac{|D_2|}{|D|}Gini(D_2)
+\end{align}</p>
+
+<p>选择<script type="math/tex">Gini_A(D)</script>最小的特征进行分裂，这种方法就是CART</p>
+
+      </article>
+      <hr>
+        <div class="bdsharebuttonbox">
+            <a href="#" class="bds_more" data-cmd="more"></a>
+            <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+            <a href="#" class="bds_douban" data-cmd="douban" title="分享到豆瓣网"></a>
+            <a href="#" class="bds_fbook" data-cmd="fbook" title="Share to Facebook"></a>
+            <a href="#" class="bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+        </div>
+
+        
+        <script>
+            window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"1","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    </div>
+	
+    <!-- duoshuo.com javascript include code. -->    
+    
+    <!-- disqus.com javascript include code. -->
+	
+    
+  </div>
+  
+  <div id="content" class="col-sm-3">
+    <div id="myAffix" class="shadow-bottom-center hidden-xs" >
+      <div class="categories-list-header">
+        Content
+      </div>
+      <div class="content-text"></div>
+    </div>
+  </div>
+  
+</div>
+    </div>
+
+    
+    <div id="top" data-toggle="tooltip" data-placement="left" title="back to top">
+      <a href="javascript:;">
+        <div class="arrow"></div>
+        <div class="stick"></div>
+      </a>
+    </div>
+
+    <footer class="">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <a href="mailto:willzhang4a58@gmail.com"><span class="glyphicon glyphicon-envelope"></span> Email</a>
+        <span class="point"> · </span>
+          <a href="https://github.com/willzhang4a58">
+            <span class="icon">
+              <svg viewBox="0 0 16 16">
+                <path fill="#aaa" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+              </svg>
+            </span>
+            Github
+          </a>
+          <span class="point"> · </span>
+          <span><a href="https://github.com/willzhang4a58/willzhang4a58.github.io/blob/master/_posts/machine learning/2016-05-21-decision-tree.markdown">View source</a></span>
+          <span class="point"> · </span>
+          <span><a class="newpost" href="javascript:;">New post</a></span>
+		  <span class="point"> · </span>
+          <span><a href="/feed.xml">RSS</a></span>
+          <span class="point"> · </span>
+          <span>&copy; 2016 willzhang4a58</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+
+    <script type="text/javascript">
+    function OnClickNewPost()
+    {
+        var title = prompt("Please enter title of your post");
+        if (title!=null){
+            title = title.replace(" ", "-");
+            var currentdate = new Date();
+            var urlNewPage = "https://github.com/willzhang4a58/willzhang4a58.github.io/new/master?filename=_posts/" 
+                + currentdate.getFullYear() + "-" + (currentdate.getMonth()+1) + "-" + currentdate.getDate() + "-" + title + ".md";
+                
+            var defaultText =  [
+                '---',
+                'layout: post',
+                'comments: true',
+                'categories: diary',
+                '---',
+                '## Title',
+                'text'
+                ].join('\n');
+            urlNewPage += "&value=" + encodeURIComponent(defaultText);
+            window.open(urlNewPage);
+        }
+    }
+    
+    $(function() {
+      // CreateNewPostLinks
+      $('.newpost').each(function(){
+          $(this).click(OnClickNewPost);
+      });
+    });
+</script>
+  <script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </body>
+</html>
