@@ -118,7 +118,7 @@ SplitInfo_A(D) = -\sum_{j=1}^v\frac{|D_j|}{|D|}\log_2\left\(\frac{|D_j|}{|D|}\ri
 GrainRate(A) = \frac{Gain(A)}{SplitInfo_A(D)}
 \end{align}
 
-分裂是选择最大增益率的特征进行分裂，这种方法就是C4.5
+选择最大增益率的特征进行分裂，这种方法就是C4.5
 
 ### 3.3 基尼指数
 
