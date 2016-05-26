@@ -76,15 +76,7 @@ A_a &= D_a^TD_a + I
 
 于是在第t次时可以得到$$x_{t,a}^T\theta_a \sim N(x_{t,a}^T\hat{\theta}_a, x_{t,a}^TA_a^{-1}x_{t,a})$$，也就是$$r_{t,a} \sim N(x_{t,a}^T\hat{\theta}_a, x_{t,a}^TA_a^{-1}x_{t,a})$$
 
-根据高斯分布的性质，其$$1-\delta$$的置信区间为
-
-\begin{align}
-\left\[ x\_{t,a}^T\hat{\theta}\_a - \alpha\sqrt{x\_{t,a}^TA\_a^{-1}x\_{t,a}} \quad , \quad x\_{t,a}^T\hat{\theta}\_a + \alpha\sqrt{x\_{t,a}^TA\_a^{-1}x\_{t,a}}\right\]
-\end{align}
-
-其中$$\alpha = 1 + \sqrt{\frac{ln(2/\delta)}{2}}$$
-
-得到置信上界后就可以使用普通UCB规则了
+根据高斯分布的性质，得到置信上界后就可以使用普通UCB规则了
 
 需要注意的是，$$A_a与D_a^Tc_a$$可以增量更新，于是标准流程如下
 
