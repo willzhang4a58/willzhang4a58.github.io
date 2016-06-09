@@ -1,0 +1,112 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>五十音练习</title>
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+	<script type="text/javascript">
+    var isIOS = navigator.userAgent.match(/iphone|ipod|ipad/gi);
+    (function(doc, win){
+        var docEl = doc.documentElement, //Android不支持修改initial-scale
+            dpr = isIOS? Math.min(win.devicePixelRatio, 3) : 1,
+            scale = 1 / dpr,
+            resizeEvt = 'orientationchange' in win ? 'orientationchange' : 'resize';
+        docEl.dataset.dpr = dpr;
+        var metaEl = doc.createElement('meta');
+        metaEl.name = 'viewport';
+        metaEl.content = 'initial-scale=' + scale + ',maximum-scale=' + scale + ', minimum-scale=' + scale + ", user-scalable=no";
+        docEl.firstElementChild.appendChild(metaEl);
+        var recalc = function(){
+            var width = docEl.clientWidth;
+            docEl.style.fontSize = 100 * (width / 640) + 'px';
+        };
+        recalc();
+        win.addEventListener(resizeEvt, recalc, false);
+    })(document, window);
+    </script>
+	<style type="text/css">
+	html,body,p{margin:0;padding:0;}
+	html{-webkit-text-size-adjust:none;font-family: 'Microsoft YaHei';}
+	body{background-color: #F4F9F8;-webkit-user-select:none;}
+	.hide{display: none;}
+	.content{width:100%;box-sizing:border-box;}
+	.view{position: relative;margin: .48rem auto .19rem auto;width: 5.76rem;height: 5.76rem;-webkit-transform:translateZ(0);transform:translateZ(0);-webkit-tap-highlight-color:rgba(255,0,0,0);background-color: #E6EAE7;color:#33AC8E;font-family: "ヒラギノ角ゴ Pro W3", Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif}
+	.view-main,.view-anthor,.view-vowel{position: absolute;}
+	.view-main{top: 50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);font-size: 2.6rem;}
+	.view-anthor,.view-vowel{width: 1.92rem;height: 1.92rem;line-height: 1.92rem;text-align: center;font-size: 1rem;}
+	.view-anthor{left:0;bottom:0;}
+	.view-vowel{right:0;bottom:0;}
+	.btn{border:0;}
+	.btn-change{display:block;width: 5.76rem;height:1.26rem;margin: 0 auto;padding:0;font:bold .4rem 'arial';color:#fff;border-radius: 3px;background:#33AC8E;}
+	.footer{padding-top: .96rem;text-align: center;font-size:.28rem;color: #b8c4cc;}
+	</style>
+</head>
+<body>
+	<div class="content">
+		<div class="view">
+			<div class="view-main"></div>
+			<div class="view-anthor hide"></div>
+			<div class="view-vowel hide"></div>
+		</div>
+		<button class="btn btn-change">Next</button>
+	</div>
+	<p class="footer">Powered by BevisZheng</p>
+	<script type="text/javascript">
+	(function(){
+		var page = {
+			init: function(){
+				this.hiragana = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "や", "ゆ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "を", "ん", "が", "ぎ", "ぐ", "げ", "ご", "ざ", "じ", "ず", "ぜ", "ぞ", "だ", "ぢ", "づ", "で", "ど", "ば", "び", "ぶ", "べ", "ぼ", "ぱ", "ぴ", "ぷ", "ぺ", "ぽ"];
+				this.katakana = ["ア", "イ", "ウ", "エ", "オ", "カ", "キ", "ク", "ケ", "コ", "サ", "シ", "ス", "セ", "ソ", "タ", "チ", "ツ", "テ", "ト", "ナ", "ニ", "ヌ", "ネ", "ノ", "ハ", "ヒ", "フ", "ヘ", "ホ", "マ", "ミ", "ム", "メ", "モ", "ヤ", "ユ", "ヨ", "ラ", "リ", "ル", "レ", "ロ", "ワ", "ヲ", "ン", "ガ", "ギ", "グ", "ゲ", "ゴ", "ザ", "ジ", "ズ", "ゼ", "ゾ", "ダ", "ヂ", "ず", "デ", "ド", "バ", "ビ", "ブ", "ベ", "ボ", "パ", "ピ", "プ", "ぺ", "ポ"];
+				this.vowel = ['a','i','u','e','o','ka','ki','ku','ke','ko','sa','shi','su','se','so','ta','chi','tsu','te','to','na','ni','nu','ne','no','ha','hi','fu','he','ho','ma','mi','mu','me','mo','ya','yu','yo','ra','ri','ru','re','ro','wa','o','n', "ga", "gi", "gu", "ge", "go", "za", "ji", "zu", "ze", "zo", "da", "ji", "zu", "de", "do", "ba", "bi", "bu", "be", "bo", "pa", "pi", "pu", "pe", "po"];
+				this.now = -1;
+
+				this.oView = $('.view');
+				this.oView_main = $('.view-main');
+				this.oView_anthor = $('.view-anthor');
+				this.oVowel = $('.view-vowel');
+				this.oBtn_change = $('.btn-change');
+
+				this.initEvent();
+				this.renderView();
+			},
+			initEvent: function(){
+				this.oView.addEventListener('click',this.showMore.bind(this),false);
+				this.oBtn_change.addEventListener('click',this.renderView.bind(this),false);
+			},
+			randomIndex: function(){
+				var nRandom = Math.floor(Math.random() * this.hiragana.length);
+				if(nRandom != this.now){
+					this.now = nRandom;
+					return nRandom + '';
+				} else{
+					return this.randomIndex();
+				}
+			},
+			renderView: function(){
+				var index = this.randomIndex();
+				var key = Math.floor(Math.random() * 2) == 0 ? 'hiragana' : 'katakana';
+				var anthor = key == "hiragana" ? 'katakana' : 'hiragana';
+				this.hideMore();
+				this.oView_main.innerHTML = this[key][index];
+				this.oView_anthor.innerHTML = this[anthor][index];
+				this.oVowel.innerHTML = this.vowel[index];
+			},
+			showMore: function(){
+				this.oView_anthor.classList.remove('hide');
+				this.oVowel.classList.remove('hide');
+			},
+			hideMore: function(){
+				this.oView_anthor.classList.add('hide');
+				this.oVowel.classList.add('hide');
+			}
+		};
+
+		page.init();
+
+		function $(s){
+			return document.querySelector(s);
+		}
+	})(window);
+	</script>
+</body>
+</html>
