@@ -121,7 +121,7 @@ $$T$$为该回归树的叶节点数量，$$w$$是树的叶节点对应的分数
 为了进一步化简，我们定义属于叶节点$$j$$的数据集合为
 
 \begin{align}
-I\_j=\{i | q(x\_i)=j\}
+I\_j=\\{i | q(x\_i)=j\\}
 \end{align}
 
 有
@@ -149,6 +149,7 @@ Obj^{(t)} \approx \sum\_{j=1}^T \left[ G\_jw\_j +\frac{1}{2}\left(\lambda + H\_j
 \end{align}
 
 假设$$q(x)$$固定，那么每个叶节点对上式的贡献互相独立
+
 由二次函数性质，可以得到最优解为
 
 \begin{align}
@@ -173,6 +174,7 @@ Gain = \frac{G\_L^2}{H\_L+\lambda} + \frac{G\_R^2}{H\_R+\lambda} - \frac{(G\_L+G
 \end{align}
 
 以此为依据选择最优的特征进行分裂
+
 和普通的决策树相比，其分裂规则由损失函数推导得来
 
 ## 7. Pruning and Regularization
