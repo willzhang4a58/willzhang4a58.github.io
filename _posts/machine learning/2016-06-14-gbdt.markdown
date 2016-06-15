@@ -1,0 +1,193 @@
+---
+layout: post
+title:  "Gradient Boosting Decision Tree"
+date: 2016-06-14 20:52:57 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Notations
+
+第$$i$$个训练样本$$x_i \in R^d$$，其真实的Label为$$y_i$$，模型的预测Label为$$\hat{y}_i$$
+
+
+## 2. Regression Tree and Ensemble
+
+回归树与决策树一样，非叶节点有决策规则，此外，其叶节点包含一个分数
+
+将单一一个回归树视为一个函数，也就是$$f(x)$$
+
+将多个回归树的结果Ensemble后也就是最后的$$\hat{y}_i$$
+
+比较常见的一种做法就是
+
+\begin{align}
+\hat{y}\_i=\sum\_{k}f\_k(x\_i)
+\end{align}
+
+## 3. Objective
+
+首先确定Model，假设我们有$$k$$个树
+
+\begin{align}
+\hat{y}\_i = \sum\_{k=1}^Kf\_k(x\_i) 
+\end{align}
+
+设定
+
+\begin{align}
+Obj=\sum\_{i=1}^nl(y\_i,\hat{y}\_i) + \sum\_{k=1}^K \Omega(f\_k)
+\end{align}
+
+上式中的第一项称为training loss，第二项则是complexity of the trees，也就是一般意义上的regularization
+
+比较常见的training loss函数如
+
+\begin{align}
+l(y\_i,\hat{y}\_i) &= (y\_i - \hat{y}\_i)^2 
+\end{align}
+
+## 4. Boosting
+
+初始时$$\hat{y}_i^{(0)} = 0 $$
+每轮训练一颗树，加入到模型中
+\begin{align}
+\hat{y}\_i^{(1)} &= \hat{y}\_i^{(0)} + f\_1(x\_i) \\\
+\hat{y}\_i^{(2)} &= \hat{y}\_i^{(1)} + f\_2(x\_i) \\\
+&...... \\\
+\hat{y}\_i^{(t)} &= \hat{y}\_i^{(t-1)} + f\_t(x\_i) = \sum\_{k=1}^tf\_k(x\_i)
+\end{align}
+
+在第$$t$$轮时，我们需要确定如何构造第$$t$$颗树，也就是$$f_t(x)$$
+
+在第$$t$$轮时，模型的预测结果为$$\hat{y}_i^{(t)}=\hat{y}_i^{(t-1)} + f_t(x_i)$$
+
+因此
+
+\begin{align}
+Obj^{(t)}= & \sum\_{i=1}^nl(y\_i,\hat{y}\_i^{(t)}) + \sum\_{i=1}^t \Omega(f\_k) \\\
+= & \sum\_{i=1}^nl(y\_i,\hat{y}\_i^{(t-1)} + f\_t(x\_i)) + \sum\_{i=1}^t \Omega(f\_k) \\\
+= & \sum\_{i=1}^nl(y\_i,\hat{y}\_i^{(t-1)} + f\_t(x\_i)) + \Omega(f\_t) + const
+\end{align}
+
+## 5. Refine the Objective
+
+回忆泰勒展开
+
+\begin{align}
+f(x+\Delta x) \approx f(x) + f'(x)\Delta x + \frac{1}{2}f'\'(x)\Delta x^2
+\end{align}
+
+得到
+
+\begin{align}
+Obj^{(t)} &=\sum\_{i=1}^nl(y\_i,\hat{y}\_i^{(t-1)} + f\_t(x\_i)) + \Omega(f\_t) + const \\\
+&\approx \sum\_{i=1}^n \left[ l(y\_i,\hat{y}\_i^{(t-1)}) + \frac{\partial l(y\_i,\hat{y}\_i^{(t-1)})}{\partial \hat{y}\_i^{(t-1)}}f\_t(x\_i) +\frac{1}{2}\frac{\partial^2 l(y\_i,\hat{y}\_i^{(t-1)})}{\partial (\hat{y}\_i^{(t-1)})^2}f\_t^2(x\_i) \right] + \Omega(f\_t) + const \\\
+\end{align}
+
+为了简化，令
+
+\begin{align}
+g\_i &= \frac{\partial l(y\_i,\hat{y}\_i^{(t-1)})}{\partial \hat{y}\_i^{(t-1)}} \\\
+h\_i &= \frac{\partial^2 l(y\_i,\hat{y}\_i^{(t-1)})}{\partial (\hat{y}\_i^{(t-1)})^2}
+\end{align}
+
+于是
+\begin{align}
+Obj^{(t)} 
+&\approx \sum\_{i=1}^n\left[ l(y\_i,\hat{y}\_i^{(t-1)}) + g\_if\_t(x\_i) +\frac{1}{2}h\_if\_t^2(x\_i)\right] + \Omega(f\_t) + const \\\
+&= \sum\_{i=1}^n\left[ g\_if\_t(x\_i) +\frac{1}{2}h\_if\_t^2(x\_i)\right] + \Omega(f\_t) + const 
+\end{align}
+
+回归树的每个叶节点都与一个分数相关，因此可以将$$f_t(x)$$定义为
+
+\begin{align}
+f\_t(x) = w\_{q(x)},w\in R^T,q:R^d \rightarrow \\{1,2,...,T\\}
+\end{align}
+
+$$T$$为该回归树的叶节点数量，$$w$$是树的叶节点对应的分数
+
+树的复杂度，容易想到一个是叶节点数$$T$$，另一个是叶节点分数的大小
+
+因此，可以定义（非唯一定义）
+
+\begin{align}
+\Omega(f\_t)=\gamma T + \frac{1}{2}\lambda \sum\_{j=1}^Tw\_j^2
+\end{align}
+
+为了进一步化简，我们定义属于叶节点$$j$$的数据集合为
+
+\begin{align}
+I\_j=\{i | q(x\_i)=j\}
+\end{align}
+
+有
+
+\begin{align}
+Obj^{(t)} 
+&\approx \sum\_{i=1}^n\left[ g\_if\_t(x\_i) +\frac{1}{2}h\_if\_t^2(x\_i)\right] + \Omega(f\_t) + const \\\
+&= \sum\_{i=1}^n\left[ g\_if\_t(x\_i) +\frac{1}{2}h\_if\_t^2(x\_i)\right] + \gamma T + \frac{1}{2}\lambda \sum\_{j=1}^Tw\_j^2 + const \\\
+&= \sum\_{i=1}^n\left[ g\_iw\_{q(x\_i)} +\frac{1}{2}h\_iw\_{q(x\_i)}^2\right] + \gamma T + \frac{1}{2}\lambda \sum\_{j=1}^Tw\_j^2 + const \\\
+&= \sum\_{j=1}^T \left[ \left(\sum\_{i\in I\_j}g\_i\right)w\_j +\frac{1}{2}\left(\sum\_{i \in I\_j} h\_i\right)w\_j^2\right] + \gamma T + \frac{1}{2}\lambda \sum\_{j=1}^Tw\_j^2 + const \\\
+&= \sum\_{j=1}^T \left[ \left(\sum\_{i\in I\_j}g\_i\right)w\_j +\frac{1}{2}\left(\lambda + \sum\_{i \in I\_j} h\_i\right)w\_j^2\right] + \gamma T  + const
+\end{align}
+
+为了符号简洁，定义
+
+\begin{align}
+G\_j&=\sum\_{i\in I\_j}g\_i \\\
+H\_j&=\sum\_{i\in I\_j}h\_i
+\end{align}
+
+有
+
+\begin{align}
+Obj^{(t)} \approx \sum\_{j=1}^T \left[ G\_jw\_j +\frac{1}{2}\left(\lambda + H\_j \right)w\_j^2\right] + \gamma T  + const
+\end{align}
+
+假设$$q(x)$$固定，那么每个叶节点对上式的贡献互相独立
+由二次函数性质，可以得到最优解为
+
+\begin{align}
+w\_j^* &=-\frac{G\_j}{H\_j+\lambda} \\\
+{Obj}^* &= -\frac{1}{2}\sum\_{j=1}^T\frac{G\_j^2}{H\_j+\lambda} + \gamma T
+\end{align}
+
+## 6. Greedy Learning of the Tree
+
+在说贪心之前，先说一种非常朴素的方法，流程如下
+
+* 遍历树的所有可能的$$q$$，计算其在$$q$$固定的情况下最优的$$Obj^*_q$$
+* 得到最优的$$Obj^*=\mathop{argmin}_q Obj^*_q$$
+* 计算各个叶节点的分数$$w_j^* =-\frac{G_j}{H_j+\lambda}$$
+
+这个方法显然是不可能实现的，接下来说贪心的方法
+
+从根节点开始，分裂出子节点，假设分出两个子节点，这个过程中Objective的变化为
+
+\begin{align}
+Gain = \frac{G\_L^2}{H\_L+\lambda} + \frac{G\_R^2}{H\_R+\lambda} - \frac{(G\_L+G\_R)^2}{H\_L+H\_R+\lambda} - \gamma
+\end{align}
+
+以此为依据选择最优的特征进行分裂
+和普通的决策树相比，其分裂规则由损失函数推导得来
+
+## 7. Pruning and Regularization
+
+* Pre-stopping
+    * 如果增益为负，提前结束
+* Post-Prunning
+    * 使树生长到最大高度后，迭代地剪掉负增益的叶节点
+    
+## 8. Recap
+
+总结一下GBDT的流程
+
+* 每次迭代新增一棵树
+* 每次迭代开始时，计算所有的$$g_i,h_i$$
+* 贪心构造新的树$$f_t(x)$$
+* 将新树增加到模型中$$\hat{y}^{(t)}=\hat{y}^{(t-1)} + f_t(x_i)$$
+    * 通常，我们不会严格按照上式增加新树，而是$$\hat{y}^{(t)}=\hat{y}^{(t-1)} + \epsilon f_t(x_i)$$，其中的$$\epsilon$$通常设为$$0.1$$。这意味着我们每轮都给下次的迭代留下优化的机会，这通常能缓解过拟合的问题
