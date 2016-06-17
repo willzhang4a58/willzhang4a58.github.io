@@ -1,0 +1,37 @@
+---
+layout: post
+title:  "Density Based Spatial Clustering of Applications with Noise"
+date: 2016-06-16 15:31:09 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Algorithm
+
+在DBSCAN中，数据点分为3类
+
+* **core points**
+* **reachable points**
+* **outliers**
+
+对于数据点$$p$$，如果与其距离小于$$\epsilon$$的数据点$$q$$数量超过minPts，则称$$p$$为**core points**，而$$q$$称为$$p$$的**directly reachable**
+
+如果存在一个序列$$p_1,p_2,...,p_n$$，其中$$p_1,p_2,...,p_{n-1}$$都是**core point**，且$$p_{i+1}$$都是$$p_i$$的**directly reachable**，则称$$p_n$$为$$p_1$$的**reachable**
+
+非任何**core point**的**reachable point**则称为**outliers**
+
+DBSCAN如此定义一个簇
+
+* 其中的所有**core points**都是互相的**reachable**
+* 任意普通点都是簇中一个**core point**的**directly reachable**
+
+## 2. 一个朴素的并行求解方法
+
+* 两两计算距离，小于$$\epsilon$$则视为一条边连接，构建无向图的邻接表
+* 根据邻接表标记**core point**
+* 将每个**core point**与其邻接点构建集合
+* 集合两两尝试合并（若有相同的**core point**则合并）
+* 当任意两个集合都没有相同的**core point**结束，此时剩余的每个集合都是一个簇
