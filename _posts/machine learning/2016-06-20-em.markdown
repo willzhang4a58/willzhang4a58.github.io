@@ -1,0 +1,119 @@
+---
+layout: post
+title:  "Expectation Maximization"
+date: 2016-06-20 13:24:37 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Gibbs Inequality
+
+自然对数满足
+
+\begin{align}
+& \ln x \leq x - 1 \\\
+&s.t. \quad x>0
+\end{align}
+
+仅当$$x=1$$时等式成立
+
+有两个概率分布
+\begin{align}
+P = \\{p_1,p_2,...,p_n\\} \\\
+Q = \\{q_1,q_2,...,q_n\\}
+\end{align}
+
+结合上面的不等式，有
+
+\begin{align}
+-\sum_{i=1}^n p_i\ln \frac{q_i}{p_i} &\geq -\sum_{i=1}^np_i(\frac{q_i}{p_i}-1) \\\
+&= \sum_{i=1}^n(p_i - q_i) \\\
+&= 0
+\end{align}
+
+整理上式得到最终的Gibbs Inequality
+
+\begin{align}
+-\sum_{i=1}^n p_i\ln p_i  \leq -\sum_{i=1}^n p_i\ln q_i
+\end{align}
+
+## 2. Description of EM
+
+存在一个统计模型，其参数为$$\theta$$，可以生成可观测到的数据集合$$X$$，以及不可观测的数据集合$$Z$$，其$$\theta$$的似然函数为
+
+\begin{align}
+L(\theta;X) = p(X|\theta) = \sum_Zp(X,Z|\theta)
+\end{align}
+
+当$$Z$$的取值范围很大时，上式的计算代价非常大，因此有迭代的EM方法
+
+**Expectation Step**
+
+给定当前的$$\theta$$的估计值$$\theta^{(t)}$$，给定X，计算当前对数似然函数的期望
+\begin{align}
+Q(\theta|\theta^{(t)}) = E_{Z|X,\theta^{(t)}}L(\theta;X,Z) = \sum_Zp(Z|X,\theta^{(t)})\log p(X,Z|\theta)
+\end{align}
+
+**Maximization Step**
+
+\begin{align}
+\theta^{(t+1)}= \mathop{argmax}_{\theta}Q(\theta|\theta^{(t)})
+\end{align}
+
+## 3. Proof
+
+根据贝叶斯定理
+\begin{align}
+\log p(X|\theta)=\log p(X,Z|\theta) - \log p(Z|X,\theta)
+\end{align}
+
+等式两边同时乘以$$p(Z \vert X,\theta^{(t)})$$，并对$$Z$$求和
+
+\begin{align}
+\log p(X|\theta)&=\sum_Zp(Z|X,\theta^{(t)})\log p(X,Z|\theta) - \sum_Zp(Z|X,\theta^{(t)})\log p(Z|X,\theta) \\\
+&= Q(\theta|\theta^{(t)})- \sum_Zp(Z|X,\theta^{(t)})\log p(Z|X,\theta)
+\end{align}
+
+为了符号简洁，定义
+
+\begin{align}
+H(\theta|\theta^{(t)}) = - \sum_Zp(Z|X,\theta^{(t)})\log p(Z|X,\theta)
+\end{align}
+
+于是
+
+\begin{align}
+\log p(X|\theta) = Q(\theta|\theta^{(t)}) + H(\theta|\theta^{(t)})
+\end{align}
+
+由于
+
+\begin{align}
+diff &=\log p(X|\theta^{(t+1)}) - \log p(X|\theta^{(t)}) \\\ 
+&=  Q(\theta^{(t+1)}|\theta^{(t)})-Q(\theta^{(t)}|\theta^{(t)}) + H(\theta^{(t+1)}|\theta^{(t)})-H(\theta^{(t)}|\theta^{(t)}) \\\
+&= Q_{diff} + H_{diff}
+\end{align}
+
+由于$$\theta^{t+1}$$的定义
+\begin{align}
+Q_{diff}&=Q(\theta^{(t+1)}|\theta^{(t)})-Q(\theta^{(t)}|\theta^{(t)}) \geq 0
+\end{align}
+
+由于Gibbs Inequality
+
+\begin{align}
+H_{diff} &= H(\theta^{(t+1)}|\theta^{(t)})-H(\theta^{(t)}|\theta^{(t)})  \\\
+&= - \sum_Zp(Z|X,\theta^{(t)})\log p(Z|X,\theta^{t+1}) + \sum_Zp(Z|X,\theta^{(t)})\log p(Z|X,\theta^{(t)}) \\\
+&\geq 0
+\end{align}
+
+因此
+
+\begin{align}
+\log p(X|\theta^{(t+1)}) \geq \log p(X|\theta^{(t)})
+\end{align}
+
+至此，EM算法的正确性得以证明
