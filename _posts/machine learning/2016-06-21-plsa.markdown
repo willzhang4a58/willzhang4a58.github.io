@@ -127,25 +127,25 @@ p(z_k|d_i) &= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{n(d_i)}
 
 设计了一个朴素的方法
 
-## 3.1 存储
+### 3.1 存储
 
 * 以$$(d_i,w_j)$$为$$key$$，$$n(d_i,w_j)$$为$$value$$，存于parameter server，称为word_cnt_table
 * 以$$(d_i,w_j)$$为$$key$$，$$p(z\vert d_i,w_j)$$为$$value$$，存于parameter server，称为posterior_table
 * 以$$w_j$$为$$key$$，$$p(w_j \vert z)$$为$$value$$，存于parameter server，称为pwz_table
 * 以$$d_i$$为$$key$$，$$p(z\vert d_i)$$为$$value$$，存于parameter server，称为pzd_table
 
-## 3.2 计算
+### 3.2 计算
 
 以下流程都是以数据流为单位，因此每一步均是并行的
 
-### 3.2.1 更新后验
+#### 3.2.1 更新后验
 
 1. 生成数据流$$\left\{i, j\right\}$$，其中$$i=[1,2,...,M],j=[1,2,...,N]$$
 2. 读取pwz_table和pzd_table的数据进行转换$$\left\{i,j\right\} \rightarrow \left\{p(z\vert d_i),p(w_j\vert z)\right\}$$
 3. 计算$$\left\{p(z\vert d_i),p(w_j\vert z)\right\} \rightarrow \left\{p(z\vert d_i,w_j)\right\}$$
 4. 将$$\left\{p(z\vert d_i,w_j)\right\}$$写入posterior_table
 
-### 3.2.2 更新pwz
+#### 3.2.2 更新pwz
 
 1. 生成数据流$$\left\{i, j\right\}$$，其中$$i=[1,2,...,M],j=[1,2,...,N]$$
 2. 读取word_cnt_table进行转换$$\left\{i, j\right\} \rightarrow \left\{i,j,n(d_i,w_j)\right\}$$
@@ -155,7 +155,7 @@ p(z_k|d_i) &= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{n(d_i)}
 6. Reduce操作$$\left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{  k,\sum_{m=1}^N\sum_{i=1}^Mn(d_i,w_m)*p(z_k\vert d_i,w_m) \right\}$$，将结果存入pwz_tmp_table
 7. 使用第5步输出的数据流，读取pwz_tmp_table进行转换$$\left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{ j,k,p(w_j\vert z_k) \right\}$$，写入pwz_table
 
-### 3.2.3 更新pzd
+#### 3.2.3 更新pzd
 
 1. 生成数据流$$\left\{i, j\right\}$$，其中$$i=[1,2,...,M],j=[1,2,...,N]$$
 2. 读取word_cnt_table进行转换$$\left\{i, j\right\} \rightarrow \left\{i,j,n(d_i,w_j)\right\}$$
