@@ -1,0 +1,165 @@
+---
+layout: post
+title:  "Probabilistic Latent Semantic Analysis"
+date: 2016-06-21 16:57:14 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Model
+
+下图是PLSA的贝叶斯网络表示
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Plsi_1.svg/300px-Plsi_1.svg.png)
+
+关于图中的符号
+
+* $$d$$：文档
+* $$c$$：主题
+* $$w$$：词
+* $$M$$：文档数量
+* $$N$$：所有文档出现的词数
+
+图中的两个条件概率分布$$p(c\vert d),p(w \vert c)$$都设定为多项式分布
+
+这是一个文档生成模型，其参数就是两个多项式分布
+
+## 2. Training
+
+PLSA通常使用EM算法进行训练
+
+定义一些符号
+
+* $$D$$：M个文档的集合
+* $$d_i$$：第$$i$$篇文档
+* $$w_j$$：第$$j$$个单词
+* $$z_k$$：第$$k$$个主题
+* $$K$$：主题个数
+* $$n(d_i)$$：$$d_i$$中的总词数
+* $$n(d_i,w_j)$$：$$d_i$$中$$w_j$$出现的次数
+* $$n(d_i,w_j,z_k)$$：$$d_i$$中$$w_j$$出现且其主题为$$z_k$$的次数
+
+在EM中的E-Step中，需要先计算隐含变量的后验概率
+
+\begin{align}
+p(z_k|d_i,w_j) = \frac{p(w_j|z_k)p(z_k|d_i)}{\sum_{l=1}^Kp(w_j|z_l)p(z_l|d_i)}
+\end{align}
+
+在M-Step中，需要最大化此后验概率下对数似然函数的期望
+
+似然函数
+
+\begin{align}
+L=\prod_{i=1}^M\prod_{j=1}^N\prod_{k=1}^Kp(d_i,w_j,z_k)^{n(d_i,w_j,z_k)}
+\end{align}
+
+取对数
+
+\begin{align}
+\log L &= \sum_{i=1}^M\sum_{j=1}^N\sum_{k=1}^Kn(d_i,w_j,z_k)\log p(d_i,w_j,z_k) \\\
+ &=\sum_{i=1}^M\sum_{j=1}^N\sum_{k=1}^Kn(d_i,w_j,z_k)\left[\log p(d_i) + \log p(z_k|d_i) + \log p(w_j|z_k)\right]
+\end{align}
+
+期望
+
+\begin{align}
+E(\log L) = \sum_{i=1}^M\sum_{j=1}^N\sum_{k=1}^Kn(d_i,w_j)p(z_k|d_i,w_j)\left[\log p(d_i) + \log p(z_k|d_i)p(w_j|z_k)\right]
+\end{align}
+
+由于$$p(d_i)$$对所求参数无影响，从优化目标中删除
+
+\begin{align}
+E(\log L) = \sum_{i=1}^M\sum_{j=1}^Nn(d_i,w_j)\sum_{k=1}^Kp(z_k|d_i,w_j)\left[ \log p(z_k|d_i)p(w_j|z_k)\right]
+\end{align}
+
+所求变量还需满足如下约束
+
+\begin{align}
+& \sum_{k=1}^K p(z_k|d_i) = 1 \\\
+& \sum_{j=1}^Np(w_j|z_k) = 1
+\end{align}
+
+使用拉格朗日乘子法
+
+\begin{align}
+H = E(\log L) + \sum_{k=1}^K \tau_k\left(1-\sum_{j=1}^Np(w_j|z_k)\right) + \sum_{i=1}^M\rho_i\left(1 - \sum_{k=1}^K p(z_k|d_i)\right)
+\end{align}
+
+根据拉格朗日乘子法
+
+\begin{align}
+&\frac{\partial H}{\partial p(w_j|z_k)} = \left[\sum_{i=1}^M\frac{n(d_i,w_j)p(z_k|d_i,w_j)}{p(w_j|z_k)}\right] - \tau_k=0 \\\
+&\frac{\partial H}{\partial p(z_k|d_i)} = \left[\sum_{j=1}^N\frac{n(d_i,w_j)p(z_k|d_i,w_j)}{p(z_k|d_i)}\right] - \rho_i = 0
+\end{align}
+
+于是有
+
+\begin{align}
+p(w_j|z_k) &= \frac{\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j)}{\tau_k} \\\
+p(z_k|d_i) &= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{\rho_i}
+\end{align}
+
+代入到原本的两个约束条件，得到
+
+\begin{align}
+\tau_k&=\sum_{j=1}^N\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j) \\\
+\rho_i &= \sum_{k=1}^K\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j) =n(d_i)
+\end{align}
+
+于是E-Step的更新式为
+\begin{align}
+p(w_j|z_k) &= \frac{\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j)}{\sum_{m=1}^N\sum_{i=1}^Mn(d_i,w_m)p(z_k|d_i,w_m)} \\\
+p(z_k|d_i) &= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{n(d_i)}
+\end{align}
+
+## 3. Distributed Method
+
+总结一下计算过程
+
+\begin{align}
+p(z_k|d_i,w_j) &= \frac{p(w_j|z_k)p(z_k|d_i)}{\sum_{l=1}^Kp(w_j|z_l)p(z_l|d_i)} \\\
+p(w_j|z_k) &= \frac{\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j)}{\sum_{m=1}^N\sum_{i=1}^Mn(d_i,w_m)p(z_k|d_i,w_m)} \\\
+p(z_k|d_i) &= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{n(d_i)}
+\end{align}
+
+设计了一个朴素的方法
+
+## 3.1 存储
+
+* 以$$(d_i,w_j)$$为$$key$$，$$n(d_i,w_j)$$为$$value$$，存于parameter server，称为word_cnt_table
+* 以$$(d_i,w_j)$$为$$key$$，$$p(z\vert d_i,w_j)$$为$$value$$，存于parameter server，称为posterior_table
+* 以$$w_j$$为$$key$$，$$p(w_j \vert z)$$为$$value$$，存于parameter server，称为pwz_table
+* 以$$d_i$$为$$key$$，$$p(z\vert d_i)$$为$$value$$，存于parameter server，称为pzd_table
+
+## 3.2 计算
+
+以下流程都是以数据流为单位，因此每一步均是并行的
+
+### 3.2.1 更新后验
+
+1. 生成数据流$$\left\{i, j\right\}$$，其中$$i=[1,2,...,M],j=[1,2,...,N]$$
+2. 读取pwz_table和pzd_table的数据进行转换$$\left\{i,j\right\} \rightarrow \left\{p(z\vert d_i),p(w_j\vert z)\right\}$$
+3. 计算$$\left\{p(z\vert d_i),p(w_j\vert z)\right\} \rightarrow \left\{p(z\vert d_i,w_j)\right\}$$
+4. 将$$\left\{p(z\vert d_i,w_j)\right\}$$写入posterior_table
+
+### 3.2.2 更新pwz
+
+1. 生成数据流$$\left\{i, j\right\}$$，其中$$i=[1,2,...,M],j=[1,2,...,N]$$
+2. 读取word_cnt_table进行转换$$\left\{i, j\right\} \rightarrow \left\{i,j,n(d_i,w_j)\right\}$$
+3. 读取posterior_table进行转换$$\left\{i,j,n(d_i,w_j)\right\} \rightarrow \left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\}$$
+4. 计算$$\left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\} \rightarrow \left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}$$
+5. Reduce操作$$\left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}$$
+6. Reduce操作$$\left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{  k,\sum_{m=1}^N\sum_{i=1}^Mn(d_i,w_m)*p(z_k\vert d_i,w_m) \right\}$$，将结果存入pwz_tmp_table
+7. 使用第5步输出的数据流，读取pwz_tmp_table进行转换$$\left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{ j,k,p(w_j\vert z_k) \right\}$$，写入pwz_table
+
+### 3.2.3 更新pzd
+
+1. 生成数据流$$\left\{i, j\right\}$$，其中$$i=[1,2,...,M],j=[1,2,...,N]$$
+2. 读取word_cnt_table进行转换$$\left\{i, j\right\} \rightarrow \left\{i,j,n(d_i,w_j)\right\}$$
+3. 读取posterior_table进行转换$$\left\{i,j,n(d_i,w_j)\right\} \rightarrow \left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\}$$
+4. 计算$$\left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\} \rightarrow \left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}$$
+5. Reduce操作$$\left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{ i,k,\sum_{j=1}^Nn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}$$
+6. 计算$$\left\{ i,k,\sum_{j=1}^Nn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{ i,k,p(z_k\vert d_i) \right\}$$，写入pzd_table
