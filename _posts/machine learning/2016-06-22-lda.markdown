@@ -1,0 +1,98 @@
+---
+layout: post
+title:  "Latent Dirichlet Allocation"
+date: 2016-06-22 18:52:21 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Generative model
+
+LDA的贝叶斯网络表示
+
+![](https://upload.wikimedia.org/wikipedia/commons/4/4d/Smoothed_LDA.png)
+
+符号意思为
+
+* $$M$$：文档数量
+* $$V$$：所有文档出现的词组成的词表的大小
+* $$N$$：总词数，为所有文档的词数的总和
+* $$K$$：主题数量
+* $$d$$：文档，$$d_m$$表示第$$m$$篇文档
+* $$w$$：词，$$w_{m,n}$$表示$$d_m$$的第$$n$$个词，$$w_m$$表示$$d_m$$的$$N_d$$个词
+* $$z$$：主题，$$z_k$$表示第$$k$$个主题
+* $$W$$：所有文档的所有词组成的$$N$$维向量
+* $$Z$$：所有文档的所有词对应的主题组成的$$N$$维向量
+* $$\theta$$：$$\theta_m$$为多项式分布$$p(z\vert d_m)$$的参数，$$\theta_{m,k}$$表示$$p(z_k\vert d_m)$$
+* $$\Theta$$：$$\Theta=\left\{ \theta_1,\theta_2,...,\theta_M \right\}$$
+* $$\alpha$$：$$\theta$$的先验分布（Dirichlet分布）的参数
+* $$\varphi$$：$$\varphi_k$$为多项式分布$$p(w\vert z_k)$$的参数，$$\varphi_{k,t}$$表示$$p(w_t\vert z_k)$$
+* $$\Phi$$：$$\Phi = \left\{ \varphi_1,\varphi_2,...,\varphi_K \right\}$$
+* $$\beta$$：$$\varphi$$的先验分布（Dirichlet分布）的参数
+
+## 2. The collapsed LDA Gibbs sampler
+
+### 2.1 The joint distribution
+
+在LDA中，由贝叶斯网络可以得到如下分解
+
+
+\begin{align}
+p(W,Z\vert \alpha,\beta)=p(W\vert Z,\beta)p(Z\vert \alpha)
+\end{align}
+
+为了符号简洁，定义
+
+\begin{align}
+\Delta (\alpha) = \frac{\prod_{i}\Gamma(\alpha_i)}{\Gamma(\sum_i\alpha_i)}
+\end{align}
+
+上式中的第一项进行化简
+
+\begin{align}
+p(W\vert Z,\beta) &=\int p(W\vert Z,\Phi)p(\Phi\vert \beta)d\Phi \\\
+&= \int p(\Phi\vert \beta)\prod_{k=1}^K\prod_{t=1}^V\varphi_{k,t}^{n_{k,t}}d\Phi \\\
+&= \prod_{k=1}^K\frac{\Delta(n_k+\beta)}{\Delta \beta},\quad n_k=\{n_{k,t}\}_{t=1}^V
+\end{align}
+
+化简第二项
+
+\begin{align}
+p(Z\vert \alpha)&=\int p(Z\vert \Theta)p(\Theta\vert \alpha)d\Theta \\\
+&=\int p(\Theta\vert \alpha)\prod_{m=1}^M\prod_{k=1}^K\theta_{m,k}^{n_{m,k}}d\Theta \\\
+&=\prod_{m=1}^M\frac{\Delta(n_m+\alpha)}{\Delta(\alpha)},\quad n_m=\{n_{m,k}\}_{k=1}^K
+\end{align}
+
+于是联合概率分布为
+
+\begin{align}
+p(Z,W\vert \alpha,\beta)=\prod_{k=1}^K\frac{\Delta(n_k+\beta)}{\Delta \beta}\prod_{m=1}^M\frac{\Delta(n_m+\alpha)}{\Delta(\alpha)}
+\end{align}
+
+### 2.2 Full conditional
+
+令$$W_i$$表示第$$m$$篇文档的第$$n$$个词
+求$$p(Z_i\vert Z_{\neg i},W)$$
+
+\begin{align}
+p(Z_i=k\vert Z_{\neg i},W)&=\frac{p(W,Z)}{p(W,Z_{\neg i})} \\\
+&=\frac{p(W\vert Z)}{p(W_{\neg i}\vert Z_{\neg i})p(W_i)}\frac{p(Z)}{p(Z_{\neg i})} \\\
+&\propto \frac{\Delta(n_k+\beta)}{\Delta(n_{k,\neg i}+\beta)}\frac{\Delta(n_m+\alpha)}{\Delta(n_{m,\neg i} + \alpha)} 
+\end{align}
+
+不断进行采样，即可得到$$Z$$
+
+### 2.3 Multinomial parameters
+
+最后我们需要得到$$\Theta$$和$$\Phi$$
+
+\begin{align}
+p({\theta}\_m\vert {\alpha},W,Z)&=\frac{1}{Norm}\prod\_{n=1}^{N\_m}p(Z\_{m,n}\vert {\theta}\_m)p({\theta}\_m\vert {\alpha})=Dir({\theta}\_m\vert {n}\_m+{\alpha}) \\\
+p({\varphi}\_k\vert {\beta},W,Z)&=\frac{1}{Norm}\prod\_{i:Z\_i=k}p(W\_i\vert {\varphi}\_k)p({\varphi}\_k\vert {\beta})=Dir({\varphi}\_k\vert {n}\_k+{\beta})
+\end{align}
+
+容易发现，这个结果使得在线学习非常容易
+使用Dirichlet分布的期望就是最后的结果了
