@@ -1,0 +1,37 @@
+---
+layout: post
+title:  "ROC and AUC"
+date: 2016-06-23 17:44:15 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+考虑一个二分类问题，正类别用$$p$$表示，负类别用$$n$$表示
+
+对于一个二分类器来说，其预测结果可能有四种情况
+
+* True Positive（TP）：预测为$$p$$，真实为$$p$$
+* False Positive（FP）：预测为$$p$$，真实为$$n$$
+* True Negative（TN）：预测为$$n$$，真实为$$n$$
+* False Negative（FN）：预测为$$n$$，真实为$$p$$
+
+定义
+
+\begin{align}
+TPR &= \frac{TP}{TP+FN} \\\
+FPR &= \frac{FP}{FP+TN}
+\end{align}
+
+对于常见的分类器来说，其预测值通常是个连续值，设定阈值后才能知道类别
+
+通过设定不同的阈值，以FPR为横轴，以TPR为纵轴，就能得到一条曲线，称为该分类器的ROC曲线
+
+下图是随机分类器的ROC曲线
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/ROC_space-2.png/500px-ROC_space-2.png)
+
+曲线下面积（Area Under Curve）称为AUC
+
+对于随机分类器，其AUC为0.5
+
+在实际计算中，由于分类器的结果并不是完全连续的，因此会变成折线，排序扫一遍就得到AUC了
