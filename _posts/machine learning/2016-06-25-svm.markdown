@@ -1,0 +1,235 @@
+---
+layout: post
+title:  "Support Vector Machine"
+date: 2016-06-25 11:14:22 
+categories: Machine&nbsp;Learning
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. Maximum Margin Classifier
+
+首先简单介绍下SVM的基本思想。
+
+SVM作为一个分类器，其分类的措施是构建一个超平面，将平面一侧的数据点分为一类，另一侧的数据点分为另一类。
+
+为了能有较好的泛化误差，平面与训练集中的数据点的最小距离应尽可能大。
+
+## 2. Linear SVM
+
+设训练集有n个数据点$$\left\{ (x_1,y_1),...,(x_n,y_n) \right\}$$
+
+设定$$x_i \in R^p,y_i \in \{-1,1\}$$
+
+超平面定义为
+
+\begin{align}
+f(x) = w \cdot x - b = 0
+\end{align}
+
+如果$$f(x)>0$$，则分类为1
+如果$$f(x)<0$$，则分类为-1
+
+### 2.1 Hard Marign
+
+如果数据是线性可分的，可构建两个平行的超平面，如下图虚线
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Svm_max_sep_hyperplane_with_margin.png/220px-Svm_max_sep_hyperplane_with_margin.png)
+
+分类超平面就是两个平行超平面的中间位置
+
+构建的两个超平面上的点称为支持向量
+
+使用$$\vert \vert w\vert \vert $$表示$$w$$的L2范数
+
+对于支持向量$$x$$，其到分类超平面的距离为$$\frac{\vert (w\cdot x-b)\vert }{\vert \vert w\vert \vert }=\frac{y(w\cdot x-b)}{\vert \vert w\vert \vert }$$
+
+由于训练集的数据点不会变化，因此$$y(w\cdot x-b)$$是个关于$$w,b$$的函数，使用$$g(w,b)$$表示这个函数
+
+SVM的优化目标
+
+\begin{align}
+w,b=\mathop{argmax}_{w,b} \frac{g(w,b)}{\vert \vert w\vert \vert }
+\end{align}
+
+此时还有约束
+
+\begin{align}
+y(w\cdot x-b) \geq g(w,b)
+\end{align}
+
+容易发现，通过缩放$$w,b$$可以控制$$g(w,b)$$，但对超平面本身没有影响，因此我们为了简便推导令$$g(w,b)=1$$
+
+新的优化目标变为
+
+\begin{align}
+&w,b = \mathop{argmax}_{w,b} \frac{1}{\vert \vert w\vert \vert }\\\
+& s.t. \quad \forall i , y_i(w\cdot x_i-b)\geq 1
+\end{align}
+
+变换一下
+\begin{align}
+&w,b = \mathop{argmin}_{w,b} \vert \vert w\vert \vert \\\
+& s.t. \quad \forall i , y_i(w\cdot x_i-b)\geq 1
+\end{align}
+
+### 2.2 Soft Margin
+
+为了处理数据线性不可分的情况，引入hinge损失函数
+
+\begin{align}
+\max\left(0, 1 - y_i(w \cdot x_i-b)\right)
+\end{align}
+
+对于满足约束的数据点，其损失值为0
+
+此时，新的优化目标
+
+\begin{align}
+w,b=\mathop{argmin}\_{w,b}\lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum\_{i=1}^n\max\left(0, 1 - y\_i(w\cdot x\_i-b)\right)
+\end{align}
+
+人工设定的参数$$\lambda$$用于均衡两者的重要性
+
+### 2.3 Differentiable Objective Function
+
+当$$\zeta_i$$表示使得$$\zeta_i\geq 1 - y_i(w\cdot x_i-b)$$成立的最小非负数，此时
+
+\begin{align}
+\zeta_i = \max\left(0, 1 - y_i(w\cdot x_i-b)\right)
+\end{align}
+
+因此，优化目标可以写为
+
+\begin{align}
+&w,b=\mathop{argmin}\_{w,b}\lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum\_{i=1}^n\zeta\_i \\\
+&s.t. \forall i,\quad  1 - y\_i(w\cdot x\_i-b) -\zeta\_i\leq 0,-\zeta\_i \leq 0
+\end{align}
+
+### 2.4 Dual
+
+引入非负的拉格朗日乘子$$\mu_i,\nu_i$$
+
+\begin{align}
+\Lambda &= \lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum_{i=1}^n\zeta_i \\\
+&+ \sum_{i=1}^n\mu_i[1 - y_i(w\cdot x_i-b) -\zeta_i] - \sum_{i=1}^n \nu_i\zeta_i
+\end{align}
+
+原求解目标等价于$$\mathop{argmin}_{w,b}\mathop{argmax}_{\mu_i\geq0,\nu_i\geq 0} \Lambda$$
+
+这里满足KKT条件，因此等价于对偶目标$$\mathop{argmax}_{\mu_i\geq0,\nu_i\geq 0}\mathop{argmin}_{w,b} \Lambda$$
+
+先求$$\mathop{argmin}_{w,b}\Lambda$$
+
+\begin{align}
+&\frac{\partial \Lambda}{\partial w}=2\lambda w-\sum_{i=1}^n\mu_iy_ix_i=0 \\\
+&\frac{\partial \Lambda}{\partial b}=\sum_{i=1}^n\mu_iy_i=0 \\\
+& \frac{\partial \Lambda}{\partial \zeta_i}=\frac{1}{n}-\mu_i-\nu_i=0
+\end{align}
+
+为了和wiki的符号统一，令$$c_i=\frac{\mu_i}{2\lambda}$$，于是
+\begin{align}
+&\frac{\partial \Lambda}{\partial w}= w-\sum_{i=1}^nc_iy_ix_i=0 \\\
+&\frac{\partial \Lambda}{\partial b}=\sum_{i=1}^nc_iy_i=0 \\\
+& \frac{\partial \Lambda}{\partial \zeta_i}=\frac{1}{n}-2\lambda c_i-\nu_i=0
+\end{align}
+
+
+代回$$\Lambda$$
+
+\begin{align}
+\Lambda &= \lambda\vert \vert w\vert \vert ^2
++ 2\lambda\sum_{i=1}^nc_i[1 - y_i(w\cdot x_i-b)]
+\end{align}
+
+除以一个常数不影响对$$\Lambda$$的优化，因此
+\begin{align}
+\Lambda &= \frac{1}{2}\vert \vert w\vert \vert ^2
++ \sum_{i=1}^nc_i[1 - y_i(w\cdot x_i-b)] \\\
+&= \frac{1}{2}w^Tw+\sum_{i=1}^nc_i - w^T\sum_{i=1}^nc_iy_ix_i+\sum_{i=1}^nc_iy_ib \\\
+&=\sum_{i=1}^nc_i - \frac{1}{2}w^Tw \\\
+&=\sum_{i=1}^nc_i - \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^nc_ic_jy_iy_j(x_i \cdot x_j)
+\end{align}
+
+由于$$\nu_i=\frac{1}{n}-2\lambda c_i \geq 0$$，因此$$c_i\leq\frac{1}{2\lambda n}$$
+
+所求变为
+
+\begin{align}
+&\mathop{argmax}\_{c\_i}\sum\_{i=1}^nc\_i - \frac{1}{2}\sum\_{i=1}^n\sum\_{j=1}^nc\_ic\_jy\_iy\_j(x\_i \cdot x\_j) \\\
+& s.t. \forall i\quad 0 \leq c\_i \leq \frac{1}{2\lambda n},\sum\_{i=1}^nc\_iy\_i=0
+\end{align}
+
+当$$c_i=0$$时，$$x_i$$对$$w$$的值无贡献，也就是说$$x_i$$被平面正确分类，且不在两个平行的边界上
+当$$0< c_i < \frac{1}{2\lambda n}$$时，$$x_i$$就在分类边界上，也称为支持向量
+当$$c_i = \frac{1}{2\lambda n}$$时，意味着$$\nu_i$$为0，即$$x_i$$被错误分类了
+
+b的计算可以找到一个支持向量然后通过$$ y_i(w\cdot x_i-b)= 1$$求解
+
+## 3. Kernel Trick
+
+观察Linear SVM我们知道，其对数据点$$x_i$$的计算仅有点积
+
+如果我们将其映射到高维，以增强其拟合能力
+
+此时需要计算的仍然仅是点积
+
+因此我们可以使用核函数完成使用低维数据点计算高维点积的任务
+
+此时我们的优化目标为
+
+\begin{align}
+&\mathop{argmax}\_{c\_i}\sum\_{i=1}^nc\_i - \frac{1}{2}\sum\_{i=1}^n\sum\_{j=1}^nc\_ic\_jy\_iy\_jk(x\_i, x\_j) \\\
+& s.t. \forall i\quad 0 \leq c\_i \leq \frac{1}{2\lambda n},\sum\_{i=1}^nc\_iy\_i=0
+\end{align}
+
+式中的$$k(x_i,x_j)$$表示核函数
+
+## 4. Modern Methods
+
+### 4.1 Sub-gradient Descent
+
+直接使用梯度方法优化
+
+\begin{align}
+w,b&=\mathop{argmin}\_{w,b}f(w,b)\\\
+&=\mathop{argmin}\_{w,b}\lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum\_{i=1}^n\max\left(0, 1 - y\_i(w\cdot x\_i-b)\right)
+\end{align}
+
+求其梯度
+
+\begin{align}
+&\frac{\partial f(w,b)}{\partial w}=2\lambda w - \frac{1}{n}\sum_{i\in \{i\vert y_i(w\cdot x_i-b) < 1\}}(y_ix_i) \\\
+&\frac{\partial f(w,b)}{\partial b} = \frac{1}{n}\sum_{i\in \{i\vert y_i(w\cdot x_i-b) < 1\}}y_i
+\end{align}
+
+这个方法无法使用kernel trick，但是可以做到大规模并行
+
+### 4.2 Coordinate Descent
+
+该方法优化目标为
+
+\begin{align}
+&\mathop{argmax}\_{c\_i}\sum\_{i=1}^nc\_i - \frac{1}{2}\sum\_{i=1}^n\sum\_{j=1}^nc\_ic\_jy\_iy\_jk(x\_i, x\_j) \\\
+& s.t. \forall i\quad 0 \leq c\_i \leq \frac{1}{2\lambda n},\sum\_{i=1}^nc\_iy\_i=0
+\end{align}
+
+迭代地对每个$$i$$根据梯度方向调整$$c_i$$，调整完后会不满足约束条件，将调整完的向量$$(c_1,c_2,...,c_n)$$替换为满足约束条件的解空间中与其距离（通常是欧式距离）最近的数据点
+
+这个方法可以使用kernel trick，但是无法做大规模
+
+## 5. Regression
+
+分类时的优化目标变为
+\begin{align}
+&w,b = \mathop{argmin}_{w,b} \frac{1}{2}\vert \vert w\vert \vert ^2\\\
+& s.t. \quad \forall i , y_i(w\cdot x_i-b)\geq 1
+\end{align}
+回归时，将$$w\cdot x_i -b$$设定为$$x_i$$的预测结果，则有类似的回归的优化目标
+
+\begin{align}
+&w,b = \mathop{argmin}_{w,b} \frac{1}{2}\vert \vert w\vert \vert ^2\\\
+& s.t. \quad \forall i , \vert y_i - (w\cdot x_i-b)\vert \leq \epsilon
+\end{align}
