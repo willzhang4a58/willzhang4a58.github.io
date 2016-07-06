@@ -9,7 +9,7 @@ comments: true
 ```cpp
 class RWLock {
 public:
-    RWLock() {};
+    RWLock() : _status(0), _waiting_readers(0), _waiting_writers(0) {};
     RWLock(const RWLock&) = delete;
     RWLock(RWLock&&) = delete;
     RWLock& operator = (const RWLock&) = delete;
