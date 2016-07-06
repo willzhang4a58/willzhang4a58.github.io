@@ -1,0 +1,243 @@
+<ul id="markdown-toc">
+  <li><a href="#maximum-margin-classifier" id="markdown-toc-maximum-margin-classifier">1. Maximum Margin Classifier</a></li>
+  <li><a href="#linear-svm" id="markdown-toc-linear-svm">2. Linear SVM</a>    <ul>
+      <li><a href="#hard-marign" id="markdown-toc-hard-marign">2.1 Hard Marign</a></li>
+      <li><a href="#soft-margin" id="markdown-toc-soft-margin">2.2 Soft Margin</a></li>
+      <li><a href="#differentiable-objective-function" id="markdown-toc-differentiable-objective-function">2.3 Differentiable Objective Function</a></li>
+      <li><a href="#dual" id="markdown-toc-dual">2.4 Dual</a></li>
+    </ul>
+  </li>
+  <li><a href="#kernel-trick" id="markdown-toc-kernel-trick">3. Kernel Trick</a></li>
+  <li><a href="#modern-methods" id="markdown-toc-modern-methods">4. Modern Methods</a>    <ul>
+      <li><a href="#sub-gradient-descent" id="markdown-toc-sub-gradient-descent">4.1 Sub-gradient Descent</a></li>
+      <li><a href="#coordinate-descent" id="markdown-toc-coordinate-descent">4.2 Coordinate Descent</a></li>
+    </ul>
+  </li>
+  <li><a href="#regression" id="markdown-toc-regression">5. Regression</a></li>
+</ul>
+
+<h2 id="maximum-margin-classifier">1. Maximum Margin Classifier</h2>
+
+<p>首先简单介绍下SVM的基本思想。</p>
+
+<p>SVM作为一个分类器，其分类的措施是构建一个超平面，将平面一侧的数据点分为一类，另一侧的数据点分为另一类。</p>
+
+<p>为了能有较好的泛化误差，平面与训练集中的数据点的最小距离应尽可能大。</p>
+
+<h2 id="linear-svm">2. Linear SVM</h2>
+
+<p>设训练集有n个数据点<script type="math/tex">\left\{ (x_1,y_1),...,(x_n,y_n) \right\}</script></p>
+
+<p>设定<script type="math/tex">x_i \in R^p,y_i \in \{-1,1\}</script></p>
+
+<p>超平面定义为</p>
+
+<p>\begin{align}
+f(x) = w \cdot x - b = 0
+\end{align}</p>
+
+<p>如果<script type="math/tex">f(x)>0</script>，则分类为1
+如果<script type="math/tex">% <![CDATA[
+f(x)<0 %]]></script>，则分类为-1</p>
+
+<h3 id="hard-marign">2.1 Hard Marign</h3>
+
+<p>如果数据是线性可分的，可构建两个平行的超平面，如下图虚线</p>
+
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Svm_max_sep_hyperplane_with_margin.png/220px-Svm_max_sep_hyperplane_with_margin.png" alt="" /></p>
+
+<p>分类超平面就是两个平行超平面的中间位置</p>
+
+<p>构建的两个超平面上的点称为支持向量</p>
+
+<p>使用<script type="math/tex">\vert \vert w\vert \vert</script>表示<script type="math/tex">w</script>的L2范数</p>
+
+<p>对于支持向量<script type="math/tex">x</script>，其到分类超平面的距离为<script type="math/tex">\frac{\vert (w\cdot x-b)\vert }{\vert \vert w\vert \vert }=\frac{y(w\cdot x-b)}{\vert \vert w\vert \vert }</script></p>
+
+<p>由于训练集的数据点不会变化，因此<script type="math/tex">y(w\cdot x-b)</script>是个关于<script type="math/tex">w,b</script>的函数，使用<script type="math/tex">g(w,b)</script>表示这个函数</p>
+
+<p>SVM的优化目标</p>
+
+<p>\begin{align}
+w,b=\mathop{argmax}_{w,b} \frac{g(w,b)}{\vert \vert w\vert \vert }
+\end{align}</p>
+
+<p>此时还有约束</p>
+
+<p>\begin{align}
+y(w\cdot x-b) \geq g(w,b)
+\end{align}</p>
+
+<p>容易发现，通过缩放<script type="math/tex">w,b</script>可以控制<script type="math/tex">g(w,b)</script>，但对超平面本身没有影响，因此我们为了简便推导令<script type="math/tex">g(w,b)=1</script></p>
+
+<p>新的优化目标变为</p>
+
+<p>\begin{align}
+&amp;w,b = \mathop{argmax}_{w,b} \frac{1}{\vert \vert w\vert \vert }\\
+&amp; s.t. \quad \forall i , y_i(w\cdot x_i-b)\geq 1
+\end{align}</p>
+
+<p>变换一下
+\begin{align}
+&amp;w,b = \mathop{argmin}_{w,b} \vert \vert w\vert \vert \\
+&amp; s.t. \quad \forall i , y_i(w\cdot x_i-b)\geq 1
+\end{align}</p>
+
+<h3 id="soft-margin">2.2 Soft Margin</h3>
+
+<p>为了处理数据线性不可分的情况，引入hinge损失函数</p>
+
+<p>\begin{align}
+\max\left(0, 1 - y_i(w \cdot x_i-b)\right)
+\end{align}</p>
+
+<p>对于满足约束的数据点，其损失值为0</p>
+
+<p>此时，新的优化目标</p>
+
+<p>\begin{align}
+w,b=\mathop{argmin}_{w,b}\lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum_{i=1}^n\max\left(0, 1 - y_i(w\cdot x_i-b)\right)
+\end{align}</p>
+
+<p>人工设定的参数<script type="math/tex">\lambda</script>用于均衡两者的重要性</p>
+
+<h3 id="differentiable-objective-function">2.3 Differentiable Objective Function</h3>
+
+<p>当<script type="math/tex">\zeta_i</script>表示使得<script type="math/tex">\zeta_i\geq 1 - y_i(w\cdot x_i-b)</script>成立的最小非负数，此时</p>
+
+<p>\begin{align}
+\zeta_i = \max\left(0, 1 - y_i(w\cdot x_i-b)\right)
+\end{align}</p>
+
+<p>因此，优化目标可以写为</p>
+
+<p>\begin{align}
+&amp;w,b=\mathop{argmin}_{w,b}\lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum_{i=1}^n\zeta_i \\
+&amp;s.t. \forall i,\quad  1 - y_i(w\cdot x_i-b) -\zeta_i\leq 0,-\zeta_i \leq 0
+\end{align}</p>
+
+<h3 id="dual">2.4 Dual</h3>
+
+<p>引入非负的拉格朗日乘子<script type="math/tex">\mu_i,\nu_i</script></p>
+
+<p>\begin{align}
+\Lambda &amp;= \lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum_{i=1}^n\zeta_i \\
+&amp;+ \sum_{i=1}^n\mu_i[1 - y_i(w\cdot x_i-b) -\zeta_i] - \sum_{i=1}^n \nu_i\zeta_i
+\end{align}</p>
+
+<p>原求解目标等价于<script type="math/tex">\mathop{argmin}_{w,b}\mathop{argmax}_{\mu_i\geq0,\nu_i\geq 0} \Lambda</script></p>
+
+<p>这里满足KKT条件，因此等价于对偶目标<script type="math/tex">\mathop{argmax}_{\mu_i\geq0,\nu_i\geq 0}\mathop{argmin}_{w,b} \Lambda</script></p>
+
+<p>先求<script type="math/tex">\mathop{argmin}_{w,b}\Lambda</script></p>
+
+<p>\begin{align}
+&amp;\frac{\partial \Lambda}{\partial w}=2\lambda w-\sum_{i=1}^n\mu_iy_ix_i=0 \\
+&amp;\frac{\partial \Lambda}{\partial b}=\sum_{i=1}^n\mu_iy_i=0 \\
+&amp; \frac{\partial \Lambda}{\partial \zeta_i}=\frac{1}{n}-\mu_i-\nu_i=0
+\end{align}</p>
+
+<p>为了和wiki的符号统一，令<script type="math/tex">c_i=\frac{\mu_i}{2\lambda}</script>，于是
+\begin{align}
+&amp;\frac{\partial \Lambda}{\partial w}= w-\sum_{i=1}^nc_iy_ix_i=0 \\
+&amp;\frac{\partial \Lambda}{\partial b}=\sum_{i=1}^nc_iy_i=0 \\
+&amp; \frac{\partial \Lambda}{\partial \zeta_i}=\frac{1}{n}-2\lambda c_i-\nu_i=0
+\end{align}</p>
+
+<p>代回<script type="math/tex">\Lambda</script></p>
+
+<p>\begin{align}
+\Lambda &amp;= \lambda\vert \vert w\vert \vert ^2
++ 2\lambda\sum_{i=1}^nc_i[1 - y_i(w\cdot x_i-b)]
+\end{align}</p>
+
+<p>除以一个常数不影响对<script type="math/tex">\Lambda</script>的优化，因此
+\begin{align}
+\Lambda &amp;= \frac{1}{2}\vert \vert w\vert \vert ^2
++ \sum_{i=1}^nc_i[1 - y_i(w\cdot x_i-b)] \\
+&amp;= \frac{1}{2}w^Tw+\sum_{i=1}^nc_i - w^T\sum_{i=1}^nc_iy_ix_i+\sum_{i=1}^nc_iy_ib \\
+&amp;=\sum_{i=1}^nc_i - \frac{1}{2}w^Tw \\
+&amp;=\sum_{i=1}^nc_i - \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^nc_ic_jy_iy_j(x_i \cdot x_j)
+\end{align}</p>
+
+<p>由于<script type="math/tex">\nu_i=\frac{1}{n}-2\lambda c_i \geq 0</script>，因此<script type="math/tex">c_i\leq\frac{1}{2\lambda n}</script></p>
+
+<p>所求变为</p>
+
+<p>\begin{align}
+&amp;\mathop{argmax}_{c_i}\sum_{i=1}^nc_i - \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^nc_ic_jy_iy_j(x_i \cdot x_j) \\
+&amp; s.t. \forall i\quad 0 \leq c_i \leq \frac{1}{2\lambda n},\sum_{i=1}^nc_iy_i=0
+\end{align}</p>
+
+<p>当<script type="math/tex">c_i=0</script>时，<script type="math/tex">x_i</script>对<script type="math/tex">w</script>的值无贡献，也就是说<script type="math/tex">x_i</script>被平面正确分类，且不在两个平行的边界上
+当<script type="math/tex">% <![CDATA[
+0< c_i < \frac{1}{2\lambda n} %]]></script>时，<script type="math/tex">x_i</script>就在分类边界上，也称为支持向量
+当<script type="math/tex">c_i = \frac{1}{2\lambda n}</script>时，意味着<script type="math/tex">\nu_i</script>为0，即<script type="math/tex">x_i</script>被错误分类了</p>
+
+<p>b的计算可以找到一个支持向量然后通过<script type="math/tex">y_i(w\cdot x_i-b)= 1</script>求解</p>
+
+<h2 id="kernel-trick">3. Kernel Trick</h2>
+
+<p>观察Linear SVM我们知道，其对数据点<script type="math/tex">x_i</script>的计算仅有点积</p>
+
+<p>如果我们将其映射到高维，以增强其拟合能力</p>
+
+<p>此时需要计算的仍然仅是点积</p>
+
+<p>因此我们可以使用核函数完成使用低维数据点计算高维点积的任务</p>
+
+<p>此时我们的优化目标为</p>
+
+<p>\begin{align}
+&amp;\mathop{argmax}_{c_i}\sum_{i=1}^nc_i - \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^nc_ic_jy_iy_jk(x_i, x_j) \\
+&amp; s.t. \forall i\quad 0 \leq c_i \leq \frac{1}{2\lambda n},\sum_{i=1}^nc_iy_i=0
+\end{align}</p>
+
+<p>式中的<script type="math/tex">k(x_i,x_j)</script>表示核函数</p>
+
+<h2 id="modern-methods">4. Modern Methods</h2>
+
+<h3 id="sub-gradient-descent">4.1 Sub-gradient Descent</h3>
+
+<p>直接使用梯度方法优化</p>
+
+<p>\begin{align}
+w,b&amp;=\mathop{argmin}_{w,b}f(w,b)\\
+&amp;=\mathop{argmin}_{w,b}\lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum_{i=1}^n\max\left(0, 1 - y_i(w\cdot x_i-b)\right)
+\end{align}</p>
+
+<p>求其梯度</p>
+
+<p>\begin{align}
+&amp;\frac{\partial f(w,b)}{\partial w}=2\lambda w - \frac{1}{n}\sum_{i\in {i\vert y_i(w\cdot x_i-b) &lt; 1}}(y_ix_i) \\
+&amp;\frac{\partial f(w,b)}{\partial b} = \frac{1}{n}\sum_{i\in {i\vert y_i(w\cdot x_i-b) &lt; 1}}y_i
+\end{align}</p>
+
+<p>这个方法无法使用kernel trick，但是可以做到大规模并行</p>
+
+<h3 id="coordinate-descent">4.2 Coordinate Descent</h3>
+
+<p>该方法优化目标为</p>
+
+<p>\begin{align}
+&amp;\mathop{argmax}_{c_i}\sum_{i=1}^nc_i - \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^nc_ic_jy_iy_jk(x_i, x_j) \\
+&amp; s.t. \forall i\quad 0 \leq c_i \leq \frac{1}{2\lambda n},\sum_{i=1}^nc_iy_i=0
+\end{align}</p>
+
+<p>迭代地对每个<script type="math/tex">i</script>根据梯度方向调整<script type="math/tex">c_i</script>，调整完后会不满足约束条件，将调整完的向量<script type="math/tex">(c_1,c_2,...,c_n)</script>替换为满足约束条件的解空间中与其距离（通常是欧式距离）最近的数据点</p>
+
+<p>这个方法可以使用kernel trick，但是无法做大规模</p>
+
+<h2 id="regression">5. Regression</h2>
+
+<p>分类时的优化目标变为
+\begin{align}
+&amp;w,b = \mathop{argmin}_{w,b} \frac{1}{2}\vert \vert w\vert \vert ^2\\
+&amp; s.t. \quad \forall i , y_i(w\cdot x_i-b)\geq 1
+\end{align}
+回归时，将<script type="math/tex">w\cdot x_i -b</script>设定为<script type="math/tex">x_i</script>的预测结果，则有类似的回归的优化目标</p>
+
+<p>\begin{align}
+&amp;w,b = \mathop{argmin}_{w,b} \frac{1}{2}\vert \vert w\vert \vert ^2\\
+&amp; s.t. \quad \forall i , \vert y_i - (w\cdot x_i-b)\vert \leq \epsilon
+\end{align}</p>

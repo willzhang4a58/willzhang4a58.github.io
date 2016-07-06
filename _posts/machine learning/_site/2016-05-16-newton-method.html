@@ -1,0 +1,468 @@
+<ul id="markdown-toc">
+  <li><a href="#section" id="markdown-toc-section">1. 牛顿法</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">2. 阻尼牛顿法</a></li>
+  <li><a href="#section-2" id="markdown-toc-section-2">3. 拟牛顿条件</a></li>
+  <li><a href="#dfp" id="markdown-toc-dfp">4. DFP算法</a></li>
+  <li><a href="#bfgs" id="markdown-toc-bfgs">5. BFGS算法</a></li>
+  <li><a href="#l-bfgs" id="markdown-toc-l-bfgs">6. L-BFGS</a></li>
+  <li><a href="#owlqn" id="markdown-toc-owlqn">7. OWLQN</a></li>
+</ul>
+
+<h2 id="section">1. 牛顿法</h2>
+
+<p>考虑问题<script type="math/tex">f(x) = 0</script></p>
+
+<p>迭代法，选择一个接近<script type="math/tex">f(x)</script>零点的<script type="math/tex">x^0</script>，计算相应的<script type="math/tex">f(x^0)</script>和切线斜率<script type="math/tex">f^{'}(x^0)</script></p>
+
+<p>计算穿过<script type="math/tex">(x^0,f(x^0))</script>的切线和x轴的交点的x坐标，记为<script type="math/tex">x^1</script></p>
+
+<p>\begin{align}
+x^1 = x^0 - \frac{f(x^0)}{f^{‘}(x^0)}
+\end{align}</p>
+
+<p>通常<script type="math/tex">x^1</script>会比<script type="math/tex">x^0</script>更接近解，使用<script type="math/tex">x^1</script>进行下一轮迭代，迭代公式为</p>
+
+<p>\begin{align}
+x^{m+1} = x^{m} - \frac{f(x^m)}{f^{‘}(x^m)}
+\end{align}</p>
+
+<p>设某个机器学习问题所求解的cost function为f(x)，那么其最优解一般满足<script type="math/tex">f^{'}(x) = 0</script></p>
+
+<p>使用牛顿法，迭代式子为</p>
+
+<p>\begin{align}x^{m+1} = x^{m} - \frac{f^{‘}(x^m)}{f^{‘’}(x^m)}\end{align}</p>
+
+<p>将上式推广到多维，有</p>
+
+<p>\begin{align}
+x^{m+1} = x^{m} - {[Hf(x^m)]}^{-1}\nabla f(x^m)
+\end{align}</p>
+
+<p>H为Hessian矩阵，下面谈一下上式的收敛条件</p>
+
+<p>\begin{align}
+- {[Hf(x^m)]}^{-1}\nabla f(x^m) = x^{m+1} - x^{m}  \Longrightarrow \nabla f(x^m) = -[Hf(x^m)](x^{m+1} - x^{m})
+\end{align}</p>
+
+<p>且</p>
+
+<p>\begin{align}
+(x^{m+1} - x^{m})^T\nabla f(x^m) = -(x^{m+1} - x^{m})^T[Hf(x^m)](x^{m+1} - x^{m})
+\end{align}</p>
+
+<p>当满足<script type="math/tex">% <![CDATA[
+(x^{m+1} - x^{m})^T\nabla f(x^m) < 0 %]]></script>时，可保证cost function在下降</p>
+
+<p>因此必须使得<script type="math/tex">(x^{m+1} - x^{m})^T[Hf(x^m)](x^{m+1} - x^{m}) > 0</script></p>
+
+<p>所以可以得到结论，当Hessian矩阵正定时，可保证收敛</p>
+
+<p>步骤总结</p>
+
+<ol>
+  <li>给定初值<script type="math/tex">x^0</script>，令<script type="math/tex">m = 0</script></li>
+  <li>计算<script type="math/tex">\nabla f(x^m)</script>和<script type="math/tex">Hf(x^m)</script></li>
+  <li>确定下降方向<script type="math/tex">d^m = - {[Hf(x^m)]}^{-1}\nabla f(x^m)</script></li>
+  <li>计算新的x值，<script type="math/tex">x^{m+1}=x^m+d^m</script></li>
+  <li>令<script type="math/tex">m =m+ 1</script>，回到第2步</li>
+</ol>
+
+<h2 id="section-1">2. 阻尼牛顿法</h2>
+
+<ol>
+  <li>给定初值<script type="math/tex">x^0</script>，令<script type="math/tex">m = 0</script></li>
+  <li>计算<script type="math/tex">\nabla f(x^m)</script>和<script type="math/tex">Hf(x^m)</script></li>
+  <li>确定下降方向<script type="math/tex">d^m = - {[Hf(x^m)]}^{-1}\nabla f(x^m)</script></li>
+  <li>计算步长<script type="math/tex">\lambda^m = {argmin_\lambda} f(x^m + \lambda d^m)</script>，计算新的x值，<script type="math/tex">x^{m+1}=x^m+\lambda^m d^m</script></li>
+  <li>令<script type="math/tex">m =m+ 1</script>，回到第2步</li>
+</ol>
+
+<h2 id="section-2">3. 拟牛顿条件</h2>
+
+<p>回忆牛顿法的迭代式子</p>
+
+<p>\begin{align}
+x^{m+1} = x^{m} - {[Hf(x^m)]}^{-1}\nabla f(x^m)
+\end{align}</p>
+
+<p>拟牛顿法的基本思想是构造一个可以近似Hessian矩阵或者其逆矩阵的正定矩阵</p>
+
+<p>将<script type="math/tex">f(x)</script>在<script type="math/tex">x^{m+1}</script>处做泰勒展开，得到</p>
+
+<p>\begin{align}
+f(x) \approx f(x^{m+1}) + \nabla f(x^{m+1})(x-x^{m+1}) + \frac{1}{2}\nabla^2 f(x^{m+1})(x-x^{m+1})^2
+\end{align}</p>
+
+<p>计算其梯度</p>
+
+<p>\begin{align}
+\nabla f(x) \approx \nabla f(x^{m+1}) + [Hf(x^{m+1})](x - x^{m+1})
+\end{align}</p>
+
+<p>为了方便，用符号<script type="math/tex">H^{m+1}</script>表示<script type="math/tex">[Hf(x^{m+1})]</script></p>
+
+<p>于是</p>
+
+<p>\begin{align}
+\nabla f(x) \approx \nabla f(x^{m+1}) + H^{m+1}(x - x^{m+1})
+\end{align}</p>
+
+<p>取<script type="math/tex">x=x^m</script>，有
+\begin{align}
+\nabla f(x^m) \approx \nabla f(x^{m+1}) + H^{m+1}(x^m - x^{m+1})
+\end{align}</p>
+
+<p>整理，得</p>
+
+<p>\begin{align}
+\nabla f(x^{m+1}) -\nabla f(x^{m})\approx  H^{m+1}(x^{m+1} - x^{m})
+\end{align}</p>
+
+<p>迭代过程中的Hessian矩阵受上式约束，上式也称为拟牛顿条件</p>
+
+<p>定义符号B为拟牛顿法对Hessian矩阵的近似矩阵
+定义符号D为拟牛顿法对Hessian矩阵的逆的近似矩阵</p>
+
+<h2 id="dfp">4. DFP算法</h2>
+
+<p>DFP算法的基本思想是通过迭代的方法，近似Hessian矩阵的逆，迭代式为</p>
+
+<p>\begin{align}
+D^{m+1} = D^m + \Delta D^m
+\end{align}</p>
+
+<p>其中，<script type="math/tex">D_0</script>一般取单位矩阵</p>
+
+<p>将<script type="math/tex">\Delta D^m</script>定义为</p>
+
+<p>\begin{align}
+\Delta D^m = \alpha uu^T + \beta vv^T
+\end{align}</p>
+
+<p>式中<script type="math/tex">\alpha</script>和<script type="math/tex">\beta</script>为待定一维向量，<script type="math/tex">u</script>和<script type="math/tex">v</script>为待定n维向量，有</p>
+
+<p>\begin{align}
+D^{m+1} = D^m + \alpha uu^T + \beta vv^T
+\end{align}
+上式乘<script type="math/tex">y^m = \nabla f(x^{m+1}) -\nabla f(x^{m})</script>，结合拟牛顿条件有</p>
+
+<p>\begin{align}
+x^{m+1} - x^{m} = D^my^m + \alpha uu^Ty^m + \beta vv^Ty^m
+\end{align}</p>
+
+<p>变换形式，有</p>
+
+<p>\begin{align}
+x^{m+1} - x^{m} = D^my^m + (\alpha u^Ty^m)u + (\beta v^Ty^m)v
+\end{align}</p>
+
+<p>令<script type="math/tex">\alpha = \frac{1}{u^Ty^m}</script>，<script type="math/tex">\beta = \frac{-1}{v^Ty^m}</script>，得到</p>
+
+<p>\begin{align}
+x^{m+1} - x^{m} -D^my^m=   u - v
+\end{align}</p>
+
+<p>为使上式成立，令<script type="math/tex">u=x^{m+1} - x^{m}</script>，<script type="math/tex">v=D^my^m</script>，因此</p>
+
+<p>\begin{align}
+&amp; \alpha = \frac{1}{u^Ty^m}=\frac{1}{(x^{m+1} - x^{m})^Ty^m} \\
+&amp; \beta = \frac{-1}{v^Ty^m} = \frac{-1}{(y^m)^TD^my^m}
+\end{align}</p>
+
+<p>最终，得到</p>
+
+<p>\begin{align}
+\Delta D^m &amp;= \alpha uu^T + \beta vv^T \\
+&amp;= \frac{(x^{m+1} - x^{m})(x^{m+1} - x^{m})^T}{(x^{m+1} - x^{m})^Ty^m} - \frac{D^my^m(y^m)^TD^m}{(y^m)^TD^my^m}
+\end{align}</p>
+
+<p>步骤总结</p>
+
+<ol>
+  <li>给定初值<script type="math/tex">x^0</script>，令<script type="math/tex">D^0 = I</script>，<script type="math/tex">m=0</script></li>
+  <li>计算下降方向<script type="math/tex">d^m=- {[Hf(x^m)]}^{-1}\nabla f(x^m)</script></li>
+  <li>计算步长<script type="math/tex">\lambda^m = {argmin_\lambda} f(x^m + \lambda d^m)</script></li>
+  <li>计算新的x，<script type="math/tex">x^{m+1} = x^m + \lambda^md^m</script></li>
+  <li>计算<script type="math/tex">\nabla f(x^{m+1})</script></li>
+  <li>计算<script type="math/tex">y^m = \nabla f(x^{m+1}) -\nabla f(x^{m})</script></li>
+  <li>计算<script type="math/tex">D^{m+1} = D^m + \Delta D^m</script></li>
+  <li>令<script type="math/tex">m=m+1</script>，回到第2步</li>
+</ol>
+
+<h2 id="bfgs">5. BFGS算法</h2>
+
+<p>BFGS算法的基本思想是通过迭代的方法，近似Hessian矩阵，迭代式为
+\begin{align}
+B^{m+1} = B^m + \Delta B^m
+\end{align}</p>
+
+<p><script type="math/tex">B^0</script>一般取单位矩阵，与DFP类似
+\begin{align}\Delta B^m = \alpha uu^T + \beta vv^T\end{align}</p>
+
+<p>因此</p>
+
+<p>\begin{align}
+B^{m+1} &amp; = B^m + \Delta B^m \\
+&amp; = B^m + \alpha uu^T + \beta vv^T \\
+\end{align}</p>
+
+<p>上式乘<script type="math/tex">s^m = (x^{m+1} - x^{m})</script>，结合拟牛顿条件有</p>
+
+<p>\begin{align}
+\nabla f(x^{m+1}) -\nabla f(x^{m}) &amp; = B^ms^m + \alpha uu^Ts^m + \beta vv^Ts^m <br />
+\end{align}</p>
+
+<p>变换形式
+\begin{align}
+\nabla f(x^{m+1}) -\nabla f(x^{m}) &amp; = B^ms^m + (\alpha u^Ts^m)u + (\beta v^Ts^m)v <br />
+\end{align}</p>
+
+<p>令<script type="math/tex">\alpha = \frac{1}{u^Ts^m}</script>，<script type="math/tex">\beta = \frac{-1}{v^Ts^m}</script>，有</p>
+
+<p>\begin{align}
+\nabla f(x^{m+1}) -\nabla f(x^{m}) -B^ms^m =  u - v
+\end{align}</p>
+
+<p>为使上式成立，令</p>
+
+<p>\begin{align}
+u &amp;= \nabla f(x^{m+1}) -\nabla f(x^{m}) \\
+v &amp;= B^ms^m
+\end{align}</p>
+
+<p>综上
+\begin{align}
+\Delta B^m &amp;= \alpha uu^T + \beta vv^T \\
+&amp;=\frac{uu^T}{u^Ts^m} - \frac{vv^T}{v^Ts^m} \\
+&amp;=\frac{uu^T}{u^T(x^{m+1} - x^{m})} - \frac{B^ms^m(B^ms^m)^T}{(B^ms^m)^T(x^{m+1} - x^{m})} \\
+&amp;=\frac{uu^T}{u^T(x^{m+1} - x^{m})} - \frac{B^m(x^{m+1} - x^{m})(x^{m+1} - x^{m})^TB^m}{(x^{m+1} - x^{m})^TB^m(x^{m+1} - x^{m})}
+\end{align}</p>
+
+<p>令<script type="math/tex">y^m = \nabla f(x^{m+1}) -\nabla f(x^{m})</script>，且有<script type="math/tex">s^m = (x^{m+1} - x^{m})</script>，上式简化为</p>
+
+<p>\begin{align}
+\Delta B^m = \frac{y^m(y^m)^T}{(y^m)^Ts^m} - \frac{B^ms^m(s^m)^TB^m}{(s^m)^TB^ms^m}
+\end{align}</p>
+
+<p>因此</p>
+
+<p>\begin{align}
+B^{m+1} = B^m +  \frac{y^m(y^m)^T}{(y^m)^Ts^m} - \frac{B^ms^m(s^m)^TB^m}{(s^m)^TB^ms^m}
+\end{align}</p>
+
+<p>对上式求逆，得到</p>
+
+<p>\begin{align}
+D^{m+1} = (I - \frac{s^m(y^m)^T}{(y^m)^Ts^m})D^m(I - \frac{y^m(s^m)^T}{(y^m)^Ts^m})+\frac{s^m(s^m)^T}{(y^m)^Ts^m}
+\end{align}</p>
+
+<p>步骤总结</p>
+
+<ol>
+  <li>给定初值<script type="math/tex">x^0</script>，令<script type="math/tex">D^0=I</script>，<script type="math/tex">m=0</script></li>
+  <li>计算下降方向<script type="math/tex">d^m = - D^m\nabla f(x^m)</script></li>
+  <li>计算步长<script type="math/tex">\lambda^m = {argmin_\lambda} f(x^m + \lambda d^m)</script></li>
+  <li>计算新的x，<script type="math/tex">x^{m+1} = x^m + \lambda^md^m</script></li>
+  <li>计算<script type="math/tex">\nabla f(x^{m+1})</script></li>
+  <li>计算<script type="math/tex">y^m = \nabla f(x^{m+1}) -\nabla f(x^{m})</script></li>
+  <li>计算<script type="math/tex">D^{m+1} = (I - \frac{s^m(y^m)^T}{(y^m)^Ts^m})D^m(I - \frac{y^m(s^m)^T}{(y^m)^Ts^m})+\frac{s^m(s^m)^T}{(y^m)^Ts^m}</script></li>
+  <li>令<script type="math/tex">m=m+1</script>，回到第2步</li>
+</ol>
+
+<h2 id="l-bfgs">6. L-BFGS</h2>
+
+<p>BFGS的Hessian矩阵在数据维度较高时会使用极大的内存</p>
+
+<p>L-BFGS在BFGS的基础上做了近似，解决了这个问题</p>
+
+<p>首先回忆BFGS的Hessian矩阵迭代式</p>
+
+<p>\begin{align}
+D^{m+1} = (I - \frac{s^m(y^m)^T}{(y^m)^Ts^m})D^m(I - \frac{y^m(s^m)^T}{(y^m)^Ts^m})+\frac{s^m(s^m)^T}{(y^m)^Ts^m}
+\end{align}</p>
+
+<p>式中
+\begin{align}
+&amp; s^m = (x^{m+1} - x^{m}) \\
+&amp; y^m = \nabla f(x^{m+1}) -\nabla f(x^{m})
+\end{align}</p>
+
+<p>定义符号<script type="math/tex">\rho^m=\frac{1}{(y^m)^Ts^m}</script>，<script type="math/tex">V^m=I - \rho^my^m(s^m)^T</script>
+Hessian矩阵迭代式为</p>
+
+<p>\begin{align}
+D^{m+1} = (V^m)^TD^mV^m+\rho^ms^m(s^m)^T
+\end{align}</p>
+
+<p>由于<script type="math/tex">D^0</script>通常为单位矩阵，因此有</p>
+
+<p>\begin{align}
+D^1 &amp;= (V^0)^TD^0V^0+\rho^0s^0(s^0)^T \\
+D^2 &amp;= (V^1)^TD^1V^1+\rho^1s^1(s^1)^T \\
+&amp;= (V^1)^T[(V^0)^TD^0V^0+\rho^0s^0(s^0)^T]V^1+\rho^1s^1(s^1)^T\\
+&amp;= (V^1)^T(V^0)^TD^0V^0V^1+(V^1)^T\rho^0s^0(s^0)^TV^1+\rho^1s^1(s^1)^T\\
+D^3 &amp;= (V^2)^TD^2V^2+\rho^2s^2(s^2)^T \\
+&amp;= (V^2)^T(V^1)^T(V^0)^TD^0V^0V^1V^2+(V^2)^T(V^1)^T\rho^0s^0(s^0)^TV^1V^2+(V^2)^T\rho^1s^1(s^1)^TV^2+\rho^2s^2(s^2)^T
+\end{align}</p>
+
+<p>一般式</p>
+
+<p>\begin{align}
+D^{m+1}=&amp; [(V^m)^T(V^{m-1})^T…(V^0)^T]D^0(V^0V^1…V^m) \\
++&amp;[(V^m)^T(V^{m-1})^T…(V^1)^T]\rho^0s^0(s^0)^T(V^1V^2…V^m) \\
++&amp;[(V^m)^T(V^{m-1})^T…(V^2)^T]\rho^1s^1(s^1)^T(V^2V^3…V^m) \\
++ &amp;… \\
++ &amp;(V^m)^T\rho^{m-1}s^{m-1}(s^{m-1})^TV^m \\
++ &amp;\rho^{m}s^{m}(s^{m})^T
+\end{align}</p>
+
+<p>由上式，计算<script type="math/tex">D^{m+1}</script>需要用到<script type="math/tex">\{s^i,y^i\}_{i=0}^m</script></p>
+
+<p>因此，在计算过程中不存储Hessian矩阵，而是连续地存储k组<script type="math/tex">\{s^i, y^i\}</script>，就能够精确地计算得到<script type="math/tex">D^1,D^2,...,D^{k}</script></p>
+
+<p>对于<script type="math/tex">D^{k+1}</script>开始的计算就需要近似了，若要精确地计算<script type="math/tex">D^{k+1}</script>，我们需要的信息是<script type="math/tex">\{s^i,y^i\}_{i=0}^k</script>，一共k+1组数据，但只能保存k组数据，因此在进行<script type="math/tex">D^{k+1}</script>的计算之前需要抛弃一组，因此舍弃最早的一组向量<script type="math/tex">\{s^0, y^0\}</script>，也就是说，在计算<script type="math/tex">D^{k+1}</script>时使用的信息为<script type="math/tex">\{s^i,y^i\}_{i=1}^k</script>，以此类推，计算<script type="math/tex">D^{k+2}</script>时使用的信息为<script type="math/tex">\{s^i,y^i\}_{i=2}^{k+1}</script></p>
+
+<p>得到近似计算式</p>
+
+<p>\begin{align}
+D^{m+1}=&amp; [(V^m)^T(V^{m-1})^T…(V^{m-k+1})^T]D^0(V^{m-k+1}V^{m-k+2}…V^m) \\
++&amp;[(V^m)^T(V^{m-1})^T…(V^{m-k+2})^T]\rho^0s^0(s^0)^T(V^{m-k+2}V^{m-k+3}…V^m) \\
++&amp;[(V^m)^T(V^{m-1})^T…(V^{m-k+3})^T]\rho^1s^1(s^1)^T(V^{m-k+3}V^{m-k+4}…V^m) \\
++ &amp;… \\
++ &amp;(V^m)^T\rho^{m-1}s^{m-1}(s^{m-1})^TV^m \\
++ &amp;\rho^{m}s^{m}(s^{m})^T
+\end{align}</p>
+
+<p>由于Hessian矩阵的作用是计算下降方向<script type="math/tex">d^m = - D^m\nabla f(x^m)</script></p>
+
+<p>\begin{align}
+D^{m}=&amp; [(V^{m-1})^T(V^{m-2})^T…(V^{m-k})^T]D^0(V^{m-k}V^{m-k+1}…V^{m-1}) \\
++&amp;[(V^{m-1})^T(V^{m-2})^T…(V^{m-k+1})^T]\rho^0s^0(s^0)^T(V^{m-k+1}V^{m-k+2}…V^{m-1}) \\
++&amp;[(V^{m-1})^T(V^{m-2})^T…(V^{m-k+2})^T]\rho^1s^1(s^1)^T(V^{m-k+2}V^{m-k+3}…V^{m-1}) \\
++ &amp;… \\
++ &amp;(V^{m-1})^T\rho^{m-2}s^{m-2}(s^{m-2})^TV^{m-1} \\
++ &amp;\rho^{m-1}s^{m-1}(s^{m-1})^T
+\end{align}</p>
+
+<p>而近似计算式中的V为n*n矩阵，直接使用近似计算式并不能达到减少内存的目的，因此有一个计算的trick，在不直接计算V的情况下得到下降方向
+计算下降方向的伪代码为</p>
+
+<p>\begin{align}
+&amp; q = \nabla f(x^m) \\
+&amp; for \quad i=m-1,m-2,…,m-k \\
+&amp; \quad\quad \alpha[i]=\rho^is^iq \\
+&amp; \quad\quad q=q-\alpha[i]y^i \\
+&amp; z=\frac{(y^{m-1})^Ts^{m-1}}{(y^{m-1})^Ty^{m-1}}q \\
+&amp; for \quad i = m-k,m-k+1,…,m-1 \\
+&amp; \quad\quad \beta[i]=\rho^i(y^i)^Tz \\
+&amp; \quad\quad z = z + s^i(\alpha[i]-\beta[i]) \\
+&amp; d^m=-z
+\end{align}</p>
+
+<p>下文称k组数据为信息队列
+步骤总结</p>
+
+<ol>
+  <li>给定初值<script type="math/tex">x^0</script>，令<script type="math/tex">D^0=I</script>，<script type="math/tex">m=0</script>，信息队列初始化为空</li>
+  <li>根据信息队列计算下降方向<script type="math/tex">d^m</script></li>
+  <li>计算步长<script type="math/tex">\lambda^m=argmin_\lambda f(x^m+\lambda d^m)</script></li>
+  <li>计算<script type="math/tex">x^{m+1}=x^m+\lambda^m d^m</script></li>
+  <li>计算<script type="math/tex">s^m</script>，<script type="math/tex">y^m</script></li>
+  <li>更新信息队列</li>
+  <li>令<script type="math/tex">m=m+1</script>，回到第2步</li>
+</ol>
+
+<h2 id="owlqn">7. OWLQN</h2>
+
+<p>由于L1正则在0处不可微，因此在使用L1正则的情况下不能直接使用L-BFGS算法。</p>
+
+<p>OWLQN便是解决这个问题的一种方法。</p>
+
+<p>定义sign函数<script type="math/tex">\sigma</script></p>
+
+<p>\begin{align}
+\sigma(x)=\left\{
+\begin{aligned}
+-1 &amp;\quad if \;  x &lt; 0\\
+0 &amp;\quad if \; x=0\\
+1 &amp; \quad if \; x &gt; 0
+\end{aligned}
+\right.
+\end{align}</p>
+
+<p>定义<script type="math/tex">\pi</script>函数，该函数有一个n维向量y作为参数</p>
+
+<p>\begin{align}
+\pi_i(x;y)=\left\{\begin{aligned}
+&amp; x_i \quad if \; \sigma(x_i) = \sigma(y_i) \\
+&amp; 0 \quad otherwise
+\end{aligned}\right.
+\end{align}</p>
+
+<p>回到优化目标</p>
+
+<p>\begin{align}
+f(x) = l(x) + C||x||_1
+\end{align}</p>
+
+<p><script type="math/tex">l(x)</script>为损失函数，C为<script type="math/tex">L1</script>系数</p>
+
+<p>对于向量<script type="math/tex">\xi\in\{-1,0,1\}^n</script>，定义</p>
+
+<p>\begin{align}
+\Omega_\xi={x\in R^n|\pi(x;\xi)=x}
+\end{align}</p>
+
+<p>对于任意<script type="math/tex">x\in \Omega_\xi</script>，有</p>
+
+<p>\begin{align}
+f(x)=l(x) + C\xi^Tx
+\end{align}</p>
+
+<p>这是一个可使用L-BFGS求解的函数</p>
+
+<p>因此，OWLQN的基本思想就是每一次迭代均不跨越象限，这样就能够使用L-BFGS</p>
+
+<p>定义伪梯度<script type="math/tex">\Gamma f(x)</script></p>
+
+<p>\begin{align}
+\Gamma_if(x)=\left\{\begin{aligned}
+&amp; {\partial_i}^{-}f(x) &amp; if \; {\partial_i}^-f(x)&gt;0\\
+&amp; {\partial_i}^+f(x)  &amp; if \; {\partial_i}^+f(x)&lt;0\\
+&amp; 0 &amp; otherwise
+\end{aligned}\right.
+\end{align}</p>
+
+<p>式中</p>
+
+<p>\begin{align}
+ {\partial_i}^{\pm}f(x) = \frac{\partial l(x)}{\partial x_i} + \left\{\begin{aligned}
+ &amp; C\sigma(x_i)  \quad &amp; if \; x_i \neq 0\\
+ &amp; \pm C \quad &amp;if \; x_i = 0
+ \end{aligned}\right.
+\end{align}</p>
+
+<p>使用伪梯度作为梯度进行计算</p>
+
+<p>伪梯度的合理性参考下链接的图5，6，7
+http://www.cnblogs.com/vivounicorn/archive/2012/06/25/2561071.html</p>
+
+<p>为了保证一轮迭代后x不跨越象限，还需要</p>
+
+<p>\begin{align}
+x^{k+1}=\pi(x^{k+1};\xi^k)
+\end{align}</p>
+
+<p>步骤总结</p>
+
+<ol>
+  <li>给定初值<script type="math/tex">x^0</script>，令<script type="math/tex">D^0=I</script>，<script type="math/tex">k=0</script>，信息队列初始化为空</li>
+  <li>计算梯度下降方向<script type="math/tex">v^k=-\Gamma f(x^k)</script></li>
+  <li>通过信息队列，计算L-BFGS的方向<script type="math/tex">d^k=Dv^k</script></li>
+  <li>这一步是个trick，<script type="math/tex">d^k=\pi(d^k;v^k)</script></li>
+  <li>计算步长<script type="math/tex">\lambda^k=argmin_\lambda f(x^k+\lambda d^k)</script></li>
+  <li>计算<script type="math/tex">x^{k+1}=\pi(x^k+\lambda^k d^k;x^k)</script></li>
+  <li>计算<script type="math/tex">s^k</script>，<script type="math/tex">y^k</script></li>
+  <li>更新信息队列</li>
+  <li>令<script type="math/tex">k=k+1</script>，回到第2步</li>
+</ol>

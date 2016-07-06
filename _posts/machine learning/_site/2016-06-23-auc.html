@@ -1,0 +1,31 @@
+<p>考虑一个二分类问题，正类别用<script type="math/tex">p</script>表示，负类别用<script type="math/tex">n</script>表示</p>
+
+<p>对于一个二分类器来说，其预测结果可能有四种情况</p>
+
+<ul>
+  <li>True Positive（TP）：预测为<script type="math/tex">p</script>，真实为<script type="math/tex">p</script></li>
+  <li>False Positive（FP）：预测为<script type="math/tex">p</script>，真实为<script type="math/tex">n</script></li>
+  <li>True Negative（TN）：预测为<script type="math/tex">n</script>，真实为<script type="math/tex">n</script></li>
+  <li>False Negative（FN）：预测为<script type="math/tex">n</script>，真实为<script type="math/tex">p</script></li>
+</ul>
+
+<p>定义</p>
+
+<p>\begin{align}
+TPR &amp;= \frac{TP}{TP+FN} \\
+FPR &amp;= \frac{FP}{FP+TN}
+\end{align}</p>
+
+<p>对于常见的分类器来说，其预测值通常是个连续值，设定阈值后才能知道类别</p>
+
+<p>通过设定不同的阈值，以FPR为横轴，以TPR为纵轴，就能得到一条曲线，称为该分类器的ROC曲线</p>
+
+<p>下图是随机分类器的ROC曲线</p>
+
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/ROC_space-2.png/500px-ROC_space-2.png" alt="" /></p>
+
+<p>曲线下面积（Area Under Curve）称为AUC</p>
+
+<p>对于随机分类器，其AUC为0.5</p>
+
+<p>在实际计算中，由于分类器的结果并不是完全连续的，因此会变成折线，排序扫一遍就得到AUC了</p>

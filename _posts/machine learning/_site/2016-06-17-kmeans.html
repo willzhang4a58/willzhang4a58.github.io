@@ -1,0 +1,66 @@
+<ul id="markdown-toc">
+  <li><a href="#main-steps" id="markdown-toc-main-steps">1. Main Steps</a></li>
+  <li><a href="#section" id="markdown-toc-section">2. 中心点的初始化</a></li>
+  <li><a href="#k" id="markdown-toc-k">3. K值的确定</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">4. 并行方法</a></li>
+</ul>
+
+<h2 id="main-steps">1. Main Steps</h2>
+
+<p>K-Means可以说是最简单实用的聚类算法了，流程如下</p>
+
+<ul>
+  <li>输入：n个数据点，目标簇个数k</li>
+  <li>初始化k个数据点作为簇的中心点</li>
+  <li>迭代至收敛
+    <ul>
+      <li>对每个数据点计算其最近的中心点，并将其归到该簇</li>
+      <li>计算每个簇新的中心点（取均值）</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="section">2. 中心点的初始化</h2>
+
+<p>比较容易想到的是随机初始化，也就是从n个数据点中随机选取k个点作为中心点</p>
+
+<p>实际上，除了随机初始化，业界还经常使用Canopy进行中心点的初始化</p>
+
+<p>Canopy需要设置两个阈值<script type="math/tex">T_1>T_2</script></p>
+
+<p><script type="math/tex">T_1</script>称为loose distance</p>
+
+<p><script type="math/tex">T_2</script>称为tight distance</p>
+
+<p>流程如下</p>
+
+<ul>
+  <li>将所有数据点作为一个集合</li>
+  <li>迭代至集合为空
+    <ul>
+      <li>从集合中随机选取一个点作为第一个簇的中心</li>
+      <li>对剩余的每个数据点，如果其与某个簇的距离小于<script type="math/tex">T_1</script>，归到该簇中</li>
+      <li>此外如果其与该簇的距离小于<script type="math/tex">T_2</script>，从集合中删除这个点</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="k">3. K值的确定</h2>
+
+<p>为了找到较好的K值，可以设定一个聚类结果评估指标（平均半径等）</p>
+
+<p>如果设定的K值小于真实簇数量，随着K的增加，指标会迅速提升</p>
+
+<p>而如果设定的K值大于真实簇数量，随着K的增加，指标提升会变缓</p>
+
+<p>由此可以找到一个较好的K值</p>
+
+<h2 id="section-1">4. 并行方法</h2>
+
+<p>K-Means的并行可以说是比较容易想到的</p>
+
+<ul>
+  <li>Map：对每个数据点计算其最近的中心点</li>
+  <li>Reduce：计算新的中心点</li>
+</ul>
+

@@ -1,0 +1,53 @@
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">RWLock</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">RWLock</span><span class="p">()</span> <span class="p">{};</span>
+    <span class="n">RWLock</span><span class="p">(</span><span class="k">const</span> <span class="n">RWLock</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+    <span class="n">RWLock</span><span class="p">(</span><span class="n">RWLock</span><span class="o">&amp;&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+    <span class="n">RWLock</span><span class="o">&amp;</span> <span class="k">operator</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="n">RWLock</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+    <span class="n">RWLock</span><span class="o">&amp;</span> <span class="k">operator</span> <span class="o">=</span> <span class="p">(</span><span class="n">RWLock</span><span class="o">&amp;&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+
+    <span class="kt">void</span> <span class="nf">rdlock</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lck</span><span class="p">(</span><span class="n">_mtx</span><span class="p">);</span>
+        <span class="n">_waiting_readers</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">_read_cv</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">lck</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">]()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_waiting_writers</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">_status</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">});</span>
+        <span class="n">_waiting_readers</span> <span class="o">-=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">_status</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">void</span> <span class="nf">wrlock</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lck</span><span class="p">(</span><span class="n">_mtx</span><span class="p">);</span>
+        <span class="n">_waiting_writers</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">_write_cv</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">lck</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">]()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_status</span> <span class="o">==</span> <span class="mi">0</span><span class="p">;</span> <span class="p">});</span>
+        <span class="n">_waiting_writers</span> <span class="o">-=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">_status</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">void</span> <span class="nf">unlock</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lck</span><span class="p">(</span><span class="n">_mtx</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_status</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">_status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">_status</span> <span class="o">-=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_waiting_writers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_status</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">_write_cv</span><span class="p">.</span><span class="n">notify_one</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">_read_cv</span><span class="p">.</span><span class="n">notify_all</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="c1">// -1    : one writer
+</span>    <span class="c1">// 0     : no reader and no writer
+</span>    <span class="c1">// n &gt; 0 : n reader
+</span>    <span class="kt">int32_t</span> <span class="n">_status</span><span class="p">;</span>
+    <span class="kt">int32_t</span> <span class="n">_waiting_readers</span><span class="p">;</span>
+    <span class="kt">int32_t</span> <span class="n">_waiting_writers</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">_mtx</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">condition_variable</span> <span class="n">_read_cv</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">condition_variable</span> <span class="n">_write_cv</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre>
+</div>

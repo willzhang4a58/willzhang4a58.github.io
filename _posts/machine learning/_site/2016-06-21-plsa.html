@@ -1,0 +1,181 @@
+<ul id="markdown-toc">
+  <li><a href="#model" id="markdown-toc-model">1. Model</a></li>
+  <li><a href="#training" id="markdown-toc-training">2. Training</a></li>
+  <li><a href="#distributed-method" id="markdown-toc-distributed-method">3. Distributed Method</a>    <ul>
+      <li><a href="#section" id="markdown-toc-section">3.1 存储</a></li>
+      <li><a href="#section-1" id="markdown-toc-section-1">3.2 计算</a>        <ul>
+          <li><a href="#section-2" id="markdown-toc-section-2">3.2.1 更新后验</a></li>
+          <li><a href="#pwz" id="markdown-toc-pwz">3.2.2 更新pwz</a></li>
+          <li><a href="#pzd" id="markdown-toc-pzd">3.2.3 更新pzd</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="model">1. Model</h2>
+
+<p>下图是PLSA的贝叶斯网络表示</p>
+
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Plsi_1.svg/300px-Plsi_1.svg.png" alt="" /></p>
+
+<p>关于图中的符号</p>
+
+<ul>
+  <li><script type="math/tex">d</script>：文档</li>
+  <li><script type="math/tex">c</script>：主题</li>
+  <li><script type="math/tex">w</script>：词</li>
+  <li><script type="math/tex">M</script>：文档数量</li>
+  <li><script type="math/tex">N</script>：所有文档出现的词数</li>
+</ul>
+
+<p>图中的两个条件概率分布<script type="math/tex">p(c\vert d),p(w \vert c)</script>都设定为多项式分布</p>
+
+<p>这是一个文档生成模型，其参数就是两个多项式分布</p>
+
+<h2 id="training">2. Training</h2>
+
+<p>PLSA通常使用EM算法进行训练</p>
+
+<p>定义一些符号</p>
+
+<ul>
+  <li><script type="math/tex">D</script>：M个文档的集合</li>
+  <li><script type="math/tex">d_i</script>：第<script type="math/tex">i</script>篇文档</li>
+  <li><script type="math/tex">w_j</script>：第<script type="math/tex">j</script>个单词</li>
+  <li><script type="math/tex">z_k</script>：第<script type="math/tex">k</script>个主题</li>
+  <li><script type="math/tex">K</script>：主题个数</li>
+  <li><script type="math/tex">n(d_i)</script>：<script type="math/tex">d_i</script>中的总词数</li>
+  <li><script type="math/tex">n(d_i,w_j)</script>：<script type="math/tex">d_i</script>中<script type="math/tex">w_j</script>出现的次数</li>
+  <li><script type="math/tex">n(d_i,w_j,z_k)</script>：<script type="math/tex">d_i</script>中<script type="math/tex">w_j</script>出现且其主题为<script type="math/tex">z_k</script>的次数</li>
+</ul>
+
+<p>在EM中的E-Step中，需要先计算隐含变量的后验概率</p>
+
+<p>\begin{align}
+p(z_k|d_i,w_j) = \frac{p(w_j|z_k)p(z_k|d_i)}{\sum_{l=1}^Kp(w_j|z_l)p(z_l|d_i)}
+\end{align}</p>
+
+<p>在M-Step中，需要最大化此后验概率下对数似然函数的期望</p>
+
+<p>似然函数</p>
+
+<p>\begin{align}
+L=\prod_{i=1}^M\prod_{j=1}^N\prod_{k=1}^Kp(d_i,w_j,z_k)^{n(d_i,w_j,z_k)}
+\end{align}</p>
+
+<p>取对数</p>
+
+<p>\begin{align}
+\log L &amp;= \sum_{i=1}^M\sum_{j=1}^N\sum_{k=1}^Kn(d_i,w_j,z_k)\log p(d_i,w_j,z_k) \\
+ &amp;=\sum_{i=1}^M\sum_{j=1}^N\sum_{k=1}^Kn(d_i,w_j,z_k)\left[\log p(d_i) + \log p(z_k|d_i) + \log p(w_j|z_k)\right]
+\end{align}</p>
+
+<p>期望</p>
+
+<p>\begin{align}
+E(\log L) = \sum_{i=1}^M\sum_{j=1}^N\sum_{k=1}^Kn(d_i,w_j)p(z_k|d_i,w_j)\left[\log p(d_i) + \log p(z_k|d_i)p(w_j|z_k)\right]
+\end{align}</p>
+
+<p>由于<script type="math/tex">p(d_i)</script>对所求参数无影响，从优化目标中删除</p>
+
+<p>\begin{align}
+E(\log L) = \sum_{i=1}^M\sum_{j=1}^Nn(d_i,w_j)\sum_{k=1}^Kp(z_k|d_i,w_j)\left[ \log p(z_k|d_i)p(w_j|z_k)\right]
+\end{align}</p>
+
+<p>所求变量还需满足如下约束</p>
+
+<p>\begin{align}
+&amp; \sum_{k=1}^K p(z_k|d_i) = 1 \\
+&amp; \sum_{j=1}^Np(w_j|z_k) = 1
+\end{align}</p>
+
+<p>使用拉格朗日乘子法</p>
+
+<p>\begin{align}
+H = E(\log L) + \sum_{k=1}^K \tau_k\left(1-\sum_{j=1}^Np(w_j|z_k)\right) + \sum_{i=1}^M\rho_i\left(1 - \sum_{k=1}^K p(z_k|d_i)\right)
+\end{align}</p>
+
+<p>根据拉格朗日乘子法</p>
+
+<p>\begin{align}
+&amp;\frac{\partial H}{\partial p(w_j|z_k)} = \left[\sum_{i=1}^M\frac{n(d_i,w_j)p(z_k|d_i,w_j)}{p(w_j|z_k)}\right] - \tau_k=0 \\
+&amp;\frac{\partial H}{\partial p(z_k|d_i)} = \left[\sum_{j=1}^N\frac{n(d_i,w_j)p(z_k|d_i,w_j)}{p(z_k|d_i)}\right] - \rho_i = 0
+\end{align}</p>
+
+<p>于是有</p>
+
+<p>\begin{align}
+p(w_j|z_k) &amp;= \frac{\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j)}{\tau_k} \\
+p(z_k|d_i) &amp;= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{\rho_i}
+\end{align}</p>
+
+<p>代入到原本的两个约束条件，得到</p>
+
+<p>\begin{align}
+\tau_k&amp;=\sum_{j=1}^N\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j) \\
+\rho_i &amp;= \sum_{k=1}^K\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j) =n(d_i)
+\end{align}</p>
+
+<p>于是E-Step的更新式为
+\begin{align}
+p(w_j|z_k) &amp;= \frac{\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j)}{\sum_{m=1}^N\sum_{i=1}^Mn(d_i,w_m)p(z_k|d_i,w_m)} \\
+p(z_k|d_i) &amp;= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{n(d_i)}
+\end{align}</p>
+
+<h2 id="distributed-method">3. Distributed Method</h2>
+
+<p>总结一下计算过程</p>
+
+<p>\begin{align}
+p(z_k|d_i,w_j) &amp;= \frac{p(w_j|z_k)p(z_k|d_i)}{\sum_{l=1}^Kp(w_j|z_l)p(z_l|d_i)} \\
+p(w_j|z_k) &amp;= \frac{\sum_{i=1}^Mn(d_i,w_j)p(z_k|d_i,w_j)}{\sum_{m=1}^N\sum_{i=1}^Mn(d_i,w_m)p(z_k|d_i,w_m)} \\
+p(z_k|d_i) &amp;= \frac{\sum_{j=1}^Nn(d_i,w_j)p(z_k|d_i,w_j)}{n(d_i)}
+\end{align}</p>
+
+<p>设计了一个朴素的方法</p>
+
+<h3 id="section">3.1 存储</h3>
+
+<ul>
+  <li>以<script type="math/tex">(d_i,w_j)</script>为<script type="math/tex">key</script>，<script type="math/tex">n(d_i,w_j)</script>为<script type="math/tex">value</script>，存于parameter server，称为word_cnt_table</li>
+  <li>以<script type="math/tex">(d_i,w_j)</script>为<script type="math/tex">key</script>，<script type="math/tex">p(z\vert d_i,w_j)</script>为<script type="math/tex">value</script>，存于parameter server，称为posterior_table</li>
+  <li>以<script type="math/tex">w_j</script>为<script type="math/tex">key</script>，<script type="math/tex">p(w_j \vert z)</script>为<script type="math/tex">value</script>，存于parameter server，称为pwz_table</li>
+  <li>以<script type="math/tex">d_i</script>为<script type="math/tex">key</script>，<script type="math/tex">p(z\vert d_i)</script>为<script type="math/tex">value</script>，存于parameter server，称为pzd_table</li>
+</ul>
+
+<h3 id="section-1">3.2 计算</h3>
+
+<p>以下流程都是以数据流为单位，因此每一步均是并行的</p>
+
+<h4 id="section-2">3.2.1 更新后验</h4>
+
+<ol>
+  <li>生成数据流<script type="math/tex">\left\{i, j\right\}</script>，其中<script type="math/tex">i=[1,2,...,M],j=[1,2,...,N]</script></li>
+  <li>读取pwz_table和pzd_table的数据进行转换<script type="math/tex">\left\{i,j\right\} \rightarrow \left\{p(z\vert d_i),p(w_j\vert z)\right\}</script></li>
+  <li>计算<script type="math/tex">\left\{p(z\vert d_i),p(w_j\vert z)\right\} \rightarrow \left\{p(z\vert d_i,w_j)\right\}</script></li>
+  <li>将<script type="math/tex">\left\{p(z\vert d_i,w_j)\right\}</script>写入posterior_table</li>
+</ol>
+
+<h4 id="pwz">3.2.2 更新pwz</h4>
+
+<ol>
+  <li>生成数据流<script type="math/tex">\left\{i, j\right\}</script>，其中<script type="math/tex">i=[1,2,...,M],j=[1,2,...,N]</script></li>
+  <li>读取word_cnt_table进行转换<script type="math/tex">\left\{i, j\right\} \rightarrow \left\{i,j,n(d_i,w_j)\right\}</script></li>
+  <li>读取posterior_table进行转换<script type="math/tex">\left\{i,j,n(d_i,w_j)\right\} \rightarrow \left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\}</script></li>
+  <li>计算<script type="math/tex">\left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\} \rightarrow \left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}</script></li>
+  <li>Reduce操作<script type="math/tex">\left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}</script></li>
+  <li>Reduce操作<script type="math/tex">\left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{  k,\sum_{m=1}^N\sum_{i=1}^Mn(d_i,w_m)*p(z_k\vert d_i,w_m) \right\}</script>，将结果存入pwz_tmp_table</li>
+  <li>使用第5步输出的数据流，读取pwz_tmp_table进行转换<script type="math/tex">\left\{  j,k,\sum_{i=1}^Mn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{ j,k,p(w_j\vert z_k) \right\}</script>，写入pwz_table</li>
+</ol>
+
+<h4 id="pzd">3.2.3 更新pzd</h4>
+
+<ol>
+  <li>生成数据流<script type="math/tex">\left\{i, j\right\}</script>，其中<script type="math/tex">i=[1,2,...,M],j=[1,2,...,N]</script></li>
+  <li>读取word_cnt_table进行转换<script type="math/tex">\left\{i, j\right\} \rightarrow \left\{i,j,n(d_i,w_j)\right\}</script></li>
+  <li>读取posterior_table进行转换<script type="math/tex">\left\{i,j,n(d_i,w_j)\right\} \rightarrow \left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\}</script></li>
+  <li>计算<script type="math/tex">\left\{ i,j,n(d_i,w_j),p(z\vert d_i,w_j) \right\} \rightarrow \left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}</script></li>
+  <li>Reduce操作<script type="math/tex">\left\{  i,j,k,n(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{ i,k,\sum_{j=1}^Nn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\}</script></li>
+  <li>计算<script type="math/tex">\left\{ i,k,\sum_{j=1}^Nn(d_i,w_j)*p(z_k\vert d_i,w_j) \right\} \rightarrow \left\{ i,k,p(z_k\vert d_i) \right\}</script>，写入pzd_table</li>
+</ol>

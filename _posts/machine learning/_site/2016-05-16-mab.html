@@ -1,0 +1,64 @@
+<ul id="markdown-toc">
+  <li><a href="#multi-armed-bandit" id="markdown-toc-multi-armed-bandit">1. Multi-Armed Bandit</a></li>
+  <li><a href="#contextual-bandit" id="markdown-toc-contextual-bandit">2. Contextual Bandit</a></li>
+</ul>
+
+<h2 id="multi-armed-bandit">1. Multi-Armed Bandit</h2>
+
+<p>在赌徒面前有一排老虎机，选择任意一台老虎机后，该台老虎机会给一个数值奖励，每台老虎机给的数值奖励服从一个单独的概率分布</p>
+
+<p>赌徒并不知道每台老虎机的概率分布，赌徒的目标是最大化玩T次后得到的总奖励</p>
+
+<p>赌徒想获取各个老虎机分布的信息（哪台老虎机能获得最大的奖励），这个称为exploration</p>
+
+<p>同时又要根据exploration的结果获得最多的奖励，这个称为exploitation</p>
+
+<p>赌徒面临着exploration和exploitation的权衡，这就是Multi-Armed Bandit问题</p>
+
+<p>一个比较有名的方法称为<script type="math/tex">\epsilon-greedy</script></p>
+
+<p>在某轮选择中</p>
+
+<ul>
+  <li>使用<script type="math/tex">1-\epsilon</script>的概率选择迄今为止奖励均值最高的老虎机</li>
+  <li>使用<script type="math/tex">\epsilon</script>的概率选择剩下的老虎机（剩下的老虎机被选择概率相等）</li>
+</ul>
+
+<p><script type="math/tex">\epsilon-greedy</script>兼顾了exploration和exploitation，通常<script type="math/tex">\epsilon</script>设定为一个较小的值（比如0.01）</p>
+
+<p>实际的在线推荐系统可以直接套用这个问题</p>
+
+<p>在线推荐的问题中，我们也有一堆的老虎机（商品/广告等），选择一个物品，会得到一个奖励（用户购买/点击等）</p>
+
+<p>在线推荐的目标也是最大化这个总奖励</p>
+
+<h2 id="contextual-bandit">2. Contextual Bandit</h2>
+
+<p>在实际的在线推荐中，通常我们还会有一个特征向量描述当时的上下文场景（用户历史行为、天气等）</p>
+
+<p>每次决策时，需要额外利用这个特征向量的信息，这种Multi-Armed Bandit的变种称为</p>
+
+<p>一个处理Contextual Bandit问题的算法流程如下</p>
+
+<ul>
+  <li>For t = 1,2,3,…
+    <ul>
+      <li>获取老虎机集合<script type="math/tex">A_t</script>，对每台老虎机<script type="math/tex">a</script>，获取所有的上下文向量（特征向量）<script type="math/tex">x_{t,a}</script></li>
+      <li>选择一个老虎机<script type="math/tex">a_t</script>作为本轮的选择，随后得到本轮的奖励<script type="math/tex">r_{t,a_t}</script></li>
+      <li>使用新的观测值<script type="math/tex">(x_{t,a_t},a_t,r_{t,a_t})</script>和历史的观测值调整策略</li>
+    </ul>
+  </li>
+</ul>
+
+<p>于是，我们可以定义T轮的总奖励为<script type="math/tex">\sum_{t=1}^Tr_{t,a_t}</script></p>
+
+<p>定义第t轮时最大奖励对应的老虎机为<script type="math/tex">a_t^*</script>，那么可以定义最优的T轮总奖励为<script type="math/tex">\sum_{t=1}^Tr_{t,a_t^*}</script></p>
+
+<p>这个差值称为regret，定义T轮regret</p>
+
+<p>\begin{align}
+R_A(T) = E\left[\sum_{t=1}^Tr_{t,a_t}\right]-E\left[\sum_{t=1}^Tr_{t,a_t^*}\right]
+\end{align}</p>
+
+<p>最大化奖励，也就是最小化regret了</p>
+

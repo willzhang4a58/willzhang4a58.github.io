@@ -1,0 +1,32 @@
+<ul id="markdown-toc">
+  <li><a href="#bagging" id="markdown-toc-bagging">1. Bagging</a></li>
+  <li><a href="#random-forest" id="markdown-toc-random-forest">2. Random Forest</a></li>
+</ul>
+
+<h2 id="bagging">1. Bagging</h2>
+
+<p>首先我们有m条训练数据集</p>
+
+<p>对这m条数据进行放回式采样，采样m次得到的m条数据用来训练一个模型</p>
+
+<p>重复t次（模型可能使用不同算法产生），就能得到t个模型</p>
+
+<p>对于单个样本，将t个模型对其的预测结果通过某种策略合并产生最终的预测结果</p>
+
+<p>需要注意到，放回式采样，会导致对于每个模型，其实都会有约36.8%的数据（称为“包外样本”）并没有参与训练，我们可以用这部分数据作为验证数据集</p>
+
+<h2 id="random-forest">2. Random Forest</h2>
+
+<p>随机森林是Bagging的一个扩展</p>
+
+<p>其t个模型都使用决策树，并且对决策树的训练过程做了一些修改</p>
+
+<p>普通的决策树模型在节点分裂是会选择一个最优的特征进行分裂</p>
+
+<p>假设当前分裂节点有n个特征可以选择</p>
+
+<p>随机森林首先会随机出大小为k（<script type="math/tex">k\leq n</script>）的特征子集，随后再从中选择最优的特征进行分裂</p>
+
+<p>经验值<script type="math/tex">k=\log_2n</script></p>
+
+<p>Bagging策略中的包外样本还可用于对决策树进行剪枝</p>

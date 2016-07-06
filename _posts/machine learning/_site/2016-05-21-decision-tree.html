@@ -1,0 +1,151 @@
+<ul id="markdown-toc">
+  <li><a href="#intuition" id="markdown-toc-intuition">1. Intuition</a></li>
+  <li><a href="#section" id="markdown-toc-section">2. 构建流程</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">3. 分裂规则</a>    <ul>
+      <li><a href="#section-2" id="markdown-toc-section-2">3.1 信息增益</a></li>
+      <li><a href="#section-3" id="markdown-toc-section-3">3.2 增益率</a></li>
+      <li><a href="#section-4" id="markdown-toc-section-4">3.3 基尼指数</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="intuition">1. Intuition</h2>
+
+<p>决策树是一种分类算法，其模型为树结构</p>
+
+<p>每个非叶节点代表一个测试，而每个叶节点都与一个类别相关</p>
+
+<p>其对单个样本的分类过程从最上的根节点开始，根据测试结果往下走，直到走到叶节点</p>
+
+<p>这样这个样本就被决策树预测了类别，一个例子如下</p>
+
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/CART_tree_titanic_survivors.png" alt="" /></p>
+
+<h2 id="section">2. 构建流程</h2>
+
+<p>大部分决策树构建算法都是自顶向下构建的</p>
+
+<p>根节点处理全部的数据，并将其划分为多个子集，传给其子节点</p>
+
+<p>子节点处理其接收到的数据，再次划分，这样递归下去完成决策树的构建</p>
+
+<p>其单个节点的构建详细流程如下</p>
+
+<ul>
+  <li>接收本节点的数据D</li>
+  <li>if D中所有的数据都是一个类别
+    <ul>
+      <li>将本节点设定为叶节点，并将其类别标注为<script type="math/tex">D</script>的类别</li>
+      <li>结束</li>
+    </ul>
+  </li>
+  <li>使用<strong>某种分裂规则</strong>将D划分为若干个子集</li>
+  <li>对所有的子集
+    <ul>
+      <li>创建子树</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>某种分裂规则</strong>是指选择某个特征，并以该特征的值作为划分数据子集的依据</p>
+
+<p>通常这种准则，应使得各个子集尽可能只有一个类别</p>
+
+<h2 id="section-1">3. 分裂规则</h2>
+
+<p>这里介绍三个比较常见的分裂依据，分别为信息增益、增益率、基尼指数</p>
+
+<p>设数据<script type="math/tex">D</script>中的类别有<script type="math/tex">m</script>个，第<script type="math/tex">i</script>个类别以<script type="math/tex">C_i</script>表示</p>
+
+<p><script type="math/tex">C_{i,D}</script>是<script type="math/tex">D</script>中<script type="math/tex">C_i</script>类数据的集合</p>
+
+<h3 id="section-2">3.1 信息增益</h3>
+
+<p>ID3使用信息增益作为分裂依据</p>
+
+<p>数据D的熵为</p>
+
+<p>\begin{align}
+Entropy(D) = -\sum_{i=1}^mp_i\log_2(p_i)
+\end{align}</p>
+
+<p><script type="math/tex">p_i</script>表示类别<script type="math/tex">i</script>在数据<script type="math/tex">D</script>中的概率，可以设定为</p>
+
+<p>\begin{align}p_i=\frac{|C_{i,D}|}{|D|}
+\end{align}</p>
+
+<p>假定选择特征<script type="math/tex">A</script>对数据<script type="math/tex">D</script>进行划分</p>
+
+<p>先假定<script type="math/tex">A</script>是离散特征，在数据<script type="math/tex">D</script>中<script type="math/tex">A</script>的所有可能取值有<script type="math/tex">v</script>个，第<script type="math/tex">i</script>个取值为<script type="math/tex">a_v</script></p>
+
+<p>于是很自然地划分出<script type="math/tex">v</script>个子集，第<script type="math/tex">i</script>个子集称为<script type="math/tex">D_i</script></p>
+
+<p>划分后的熵可以定义为</p>
+
+<p>\begin{align}
+Entropy_A(D) = \sum_{j=1}^v\frac{|D_j|}{|D|}Entropy(D_j)
+\end{align}</p>
+
+<p>信息增益定义为</p>
+
+<p>\begin{align}
+Gain(A) = Entropy(D) - Entropy_A(D)
+\end{align}</p>
+
+<p>显然，<script type="math/tex">Gain(A)</script>表示通过划分，不确定性减少的程度</p>
+
+<p>于是我们要选择使得信息增益最大的特征进行划分</p>
+
+<p>上面考虑的是A是离散值的情况下</p>
+
+<p>实际上，在A是连续值的情况下，在分裂时是选择一个阈值</p>
+
+<p>特征的值小于等于阈值的划分为一个子集，大于阈值的划分为另一个子集</p>
+
+<h3 id="section-3">3.2 增益率</h3>
+
+<p>ID3有一个缺点，倾向于划分出更多的子集。</p>
+
+<p>极端情况下，将数据D划分为一条数据一个子集，但是这种划分对于分类并没有用</p>
+
+<p>C4.5是ID3的后继者，引入一个参数用于改善这种缺点</p>
+
+<p>引入一个称为split information的值</p>
+
+<p>对特征A做划分的split information为</p>
+
+<p>\begin{align}
+SplitInfo_A(D) = -\sum_{j=1}^v\frac{|D_j|}{|D|}\log_2\left(\frac{|D_j|}{|D|}\right)
+\end{align}</p>
+
+<p>容易发现，这其实是个熵，划分出的子集个数越多，这个split information越大</p>
+
+<p>而增益率定义为</p>
+
+<p>\begin{align}
+GrainRate(A) = \frac{Gain(A)}{SplitInfo_A(D)}
+\end{align}</p>
+
+<p>选择最大增益率的特征进行分裂，这种方法就是C4.5</p>
+
+<h3 id="section-4">3.3 基尼指数</h3>
+
+<p>CART使用基尼指数作为划分依据</p>
+
+<p>基尼指数度量数据D的不纯度（数据纯意味这所有数据都是一个类别）</p>
+
+<p>\begin{align}
+Gini(D) = 1 - \sum_{i=1}^mp_i^2
+\end{align}</p>
+
+<p>CART对于离散值和连续值特征都是划分为两个子集</p>
+
+<p>设划分为两个子集<script type="math/tex">D_1</script>和<script type="math/tex">D_2</script></p>
+
+<p>划分后的基尼指数设定为</p>
+
+<p>\begin{align}
+Gini_A(D) = \frac{|D_1|}{|D|}Gini(D_1) + \frac{|D_2|}{|D|}Gini(D_2)
+\end{align}</p>
+
+<p>选择<script type="math/tex">Gini_A(D)</script>最小的特征进行分裂，这种方法就是CART</p>

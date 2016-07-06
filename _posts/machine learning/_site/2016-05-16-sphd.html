@@ -1,0 +1,144 @@
+<ul id="markdown-toc">
+  <li><a href="#section" id="markdown-toc-section">1. 相似性度量</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">2. 哈希函数</a>    <ul>
+      <li><a href="#section-2" id="markdown-toc-section-2">2.1 定义</a></li>
+      <li><a href="#section-3" id="markdown-toc-section-3">2.2 编码长度</a></li>
+      <li><a href="#section-4" id="markdown-toc-section-4">2.3 球心与半径</a>        <ul>
+          <li><a href="#section-5" id="markdown-toc-section-5">2.3.1 求解主流程</a></li>
+          <li><a href="#section-6" id="markdown-toc-section-6">2.3.2 调整半径——均匀划分数据</a></li>
+          <li><a href="#section-7" id="markdown-toc-section-7">2.3.3 调整球心——两两独立</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#section-8" id="markdown-toc-section-8">3. 查询</a></li>
+  <li><a href="#section-9" id="markdown-toc-section-9">4. 杂谈</a></li>
+</ul>
+
+<h2 id="section">1. 相似性度量</h2>
+
+<p>两个向量A和B的相似性度量
+\begin{align}
+A &amp;= (a_1,a_2,a_3,…,a_n) \\
+B &amp;= (b_1,b_2,b_3,…,b_n)
+\end{align}
+相似度用符号S表示，S越大表示A和B越相似</p>
+
+<h2 id="section-1">2. 哈希函数</h2>
+
+<h3 id="section-2">2.1 定义</h3>
+<p>假设二进制编码长度为<script type="math/tex">C</script>位，那么需要<script type="math/tex">C</script>个哈希函数
+每个哈希函数代表一个超球，当样本与球心的相似系数大于等于球半径时，哈希函数的结果为<script type="math/tex">1</script>，否则为<script type="math/tex">0</script>
+设第<script type="math/tex">i</script>个哈希函数代表的超球的球心为<script type="math/tex">p_i</script>，半径为<script type="math/tex">r_i</script>，有哈希函数<script type="math/tex">h_i(x)</script>
+\begin{align}
+h_i(x)= \left\{
+\begin{aligned}
+&amp; 0 &amp; S(p_i, x) &lt; r_i \\
+&amp; 1 &amp; S(p_i, x) \geq r_i
+\end{aligned}
+\right.
+\end{align}</p>
+
+<p>对于每个数据点，使用这C个哈希函数能得到长度为C的二进制编码</p>
+
+<h3 id="section-3">2.2 编码长度</h3>
+
+<p>假设用户有N个数据点，要计算每个点的K个邻近点
+那么希望一个桶里平均有3K个，应该有<script type="math/tex">N/(3K)</script>个桶
+\begin{align}
+C = \lfloor log_2\frac{N}{3K} \rfloor
+\end{align}</p>
+
+<h3 id="section-4">2.3 球心与半径</h3>
+
+<h4 id="section-5">2.3.1 求解主流程</h4>
+
+<p>定义</p>
+
+<p>\begin{align}
+o_i &amp;= | \{ x|h_i(x)=1\}| \\
+o_{i,j} &amp;= | \{ x|h_i(x)=1,h_j(x)=1\}|
+\end{align}</p>
+
+<p>理想的超球应满足</p>
+
+<ul>
+  <li>均匀划分数据，<script type="math/tex">P(h_i(x) = 1) = \frac{1}{2}</script>，即<script type="math/tex">o_i=\frac{N}{2}</script></li>
+  <li>球之间两两独立，<script type="math/tex">P(h_i(x) = h_j(x) = 1) = P(h_i(x))P(h_j(x))=\frac{1}{4}</script>，即<script type="math/tex">o_{i,j}=\frac{N}{4}</script></li>
+</ul>
+
+<p>由于随机子集可以近似完整数据集的分布，因此随机选取数据子集<script type="math/tex">\\{x_1,x_2,...,x_m\\}</script></p>
+
+<p>这里取 <script type="math/tex">m=max(\frac{N}{100}, 1e4)</script>，1e4为人为设定的参数</p>
+
+<p>接下来以这个子集为优化目标，得到C个哈希函数</p>
+
+<p>算法步骤</p>
+
+<ol>
+  <li>在子集中随机选取C个点，作为C个超球的球心</li>
+  <li>调整C个超球的半径，使得在子集满足条件『均匀划分数据』</li>
+  <li>迭代 <br />
+ 3.1. 调整C个超球的球心使得在子集逼近条件『两两独立』<br />
+ 3.2. 调整C个超球的半径，使得在子集满足条件『均匀划分数据』</li>
+</ol>
+
+<h4 id="section-6">2.3.2 调整半径——均匀划分数据</h4>
+
+<p>固定球心<script type="math/tex">p_i</script>，求球半径<script type="math/tex">r_i</script>，显然<script type="math/tex">r_i</script>为<script type="math/tex">p_i</script>与子集中所有点相似度的中位数</p>
+
+<p>并行设计：</p>
+
+<ol>
+  <li>使用M个map计算每个数据点与C个球心的相似度</li>
+  <li>Reduce，得到C个中位数作为半径</li>
+</ol>
+
+<h4 id="section-7">2.3.3 调整球心——两两独立</h4>
+
+<p>很直观的做法</p>
+
+<ul>
+  <li>当<script type="math/tex">o_{i,j}>\frac{m}{4}</script>时，两球应受到一个斥力</li>
+  <li>当<script type="math/tex">% <![CDATA[
+o_{i,j}<\frac{m}{4} %]]></script>时，两球应受到一个引力</li>
+</ul>
+
+<p>定义球i受到的来自球j的力<script type="math/tex">f_{i\leftarrow j}</script></p>
+
+<p>\begin{align}
+f_{i\leftarrow j}=\frac{1}{2}\frac{o_{i,j}-m/4}{m/4}(p_i-p_j)
+\end{align}</p>
+
+<p>显然</p>
+
+<p>\begin{align}
+f_{j\leftarrow i}=-f_{i\leftarrow j}
+\end{align}</p>
+
+<p>并行设计：</p>
+
+<ol>
+  <li>使用m个map，每个map处理一条数据，每条数据计算C个哈希函数，取其中哈希值为1的哈希函数ID两两配对，作为map的输出流</li>
+  <li>reduce操作，得到任意两个哈希函数i和j对应的<script type="math/tex">o_{i,j}</script></li>
+  <li>使用<script type="math/tex">C^2</script>个map，得到任意两个超球之间的力</li>
+  <li>reduce，得到每个超球受到的合力，并更新球心</li>
+</ol>
+
+<h2 id="section-8">3. 查询</h2>
+
+<ol>
+  <li>将query转为二进制编码</li>
+  <li>用二进制编码对应的桶中的数据更新堆中的top K</li>
+  <li>如果堆大小等于K，则结束，否则进入下一步</li>
+  <li>按照球面海明距离从小到大遍历桶，直到堆的大小等于K</li>
+</ol>
+
+<p>x和y为两个二进制串，其球面海明距离为:
+\begin{align}
+d=\frac{(x异或y)中的1的数量}{(x\&amp;y)中的1的数量}
+\end{align}</p>
+
+<h2 id="section-9">4. 杂谈</h2>
+
+<p>在实际工业环境中，数据通常是稀疏的，因此这个KNN方案作用有限，也只有在大公司内会有用了。</p>

@@ -1,0 +1,79 @@
+<ul id="markdown-toc">
+  <li><a href="#isolation-tree" id="markdown-toc-isolation-tree">1. Isolation Tree</a></li>
+  <li><a href="#characteristic-of-isolation-trees" id="markdown-toc-characteristic-of-isolation-trees">2. Characteristic of Isolation Trees</a></li>
+  <li><a href="#anomaly-detection-using-iforest" id="markdown-toc-anomaly-detection-using-iforest">3. Anomaly Detection using iForest</a>    <ul>
+      <li><a href="#training" id="markdown-toc-training">3.1 Training</a></li>
+      <li><a href="#evaluating-stage" id="markdown-toc-evaluating-stage">3.2 Evaluating Stage</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="isolation-tree">1. Isolation Tree</h2>
+
+<p>用T表示Isolation Tree的一个节点，如果T是非叶节点，则一定有两个子节点<script type="math/tex">(T_l,T_r)</script>，且记录了一个特征<script type="math/tex">q</script>和一个值<script type="math/tex">p</script>，特征<script type="math/tex">q</script>的值小于p的数据点划分到<script type="math/tex">T_l</script>，否则划分到<script type="math/tex">T_r</script></p>
+
+<p>用h(x)表示数据点x落到的叶节点距离根节点的距离
+设定有n个数据点，数据点是d维
+使用c(n)表示h(x)的均值</p>
+
+<p>\begin{align}
+c(n)=2H(n-1)-\frac{2(n-1)}{n}
+\end{align}</p>
+
+<p><script type="math/tex">H(i)</script>是谐波数
+\begin{align}
+H(i)\approx \ln(i)+0.5772156649
+\end{align}</p>
+
+<p>Anomaly分数定义为</p>
+
+<p>\begin{align}
+s(x,n)=2^{-\frac{E(h(x))}{c(n)}}
+\end{align}</p>
+
+<p><script type="math/tex">E(h(x))</script>是多个iTree的<script type="math/tex">h(x)</script>的均值</p>
+
+<p>因此</p>
+
+<ul>
+  <li>如果数据点的<script type="math/tex">s</script>接近1，判定为异常点</li>
+  <li>如果数据点的<script type="math/tex">s</script>小于0.5，可以认为是非常正常的数据点</li>
+  <li>如果所有数据点的<script type="math/tex">s</script>都在0.5附近，那么不存在任何异常点</li>
+</ul>
+
+<h2 id="characteristic-of-isolation-trees">2. Characteristic of Isolation Trees</h2>
+
+<p>异常点密集处导致<script type="math/tex">h(x)</script>偏大，iForest难于检测
+因此需要采样降低异常点的密度，相比于全量构造，更快且效果更好。</p>
+
+<h2 id="anomaly-detection-using-iforest">3. Anomaly Detection using iForest</h2>
+
+<h3 id="training">3.1 Training</h3>
+
+<ul>
+  <li>Input: 输入数据<script type="math/tex">X</script>，森林大小<script type="math/tex">t</script>，采样大小<script type="math/tex">\varphi</script></li>
+  <li>Output: 森林</li>
+  <li>步骤：
+    <ul>
+      <li>初始化</li>
+      <li>设定树高限制<script type="math/tex">l=ceiling(\log_2\varphi)</script></li>
+      <li>迭代t次
+        <ul>
+          <li>取样生成子集<script type="math/tex">X'</script></li>
+          <li>生成新的iTree</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>限制树高，是因为我们只关心小于平均高度的节点。
+根据经验值，<script type="math/tex">\varphi=256，t=100</script></p>
+
+<h3 id="evaluating-stage">3.2 Evaluating Stage</h3>
+
+<p>令<script type="math/tex">e</script>为实际长度
+由于限制了树高，实际计算<script type="math/tex">h(x)</script>时
+\begin{align}
+h(x)=e+c(\varphi)
+\end{align}</p>

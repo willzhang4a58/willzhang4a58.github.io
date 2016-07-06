@@ -1,0 +1,233 @@
+<ul id="markdown-toc">
+  <li><a href="#section" id="markdown-toc-section">1. 存储器的层级结构</a></li>
+  <li><a href="#cache-line" id="markdown-toc-cache-line">2. Cache Line</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">3. 映射策略</a>    <ul>
+      <li><a href="#section-2" id="markdown-toc-section-2">3.1 直接映射</a></li>
+      <li><a href="#section-3" id="markdown-toc-section-3">3.2 全相联映射</a></li>
+      <li><a href="#section-4" id="markdown-toc-section-4">3.3 组相联映射</a></li>
+    </ul>
+  </li>
+  <li><a href="#section-5" id="markdown-toc-section-5">4. 替换策略</a></li>
+  <li><a href="#section-6" id="markdown-toc-section-6">5. 更新策略</a></li>
+  <li><a href="#section-7" id="markdown-toc-section-7">6. 多级缓存</a></li>
+  <li><a href="#cache" id="markdown-toc-cache">7. Cache友好的程序</a>    <ul>
+      <li><a href="#section-8" id="markdown-toc-section-8">7.1 指令缓存溢出</a></li>
+      <li><a href="#section-9" id="markdown-toc-section-9">7.2 缓存冲突</a></li>
+      <li><a href="#cache-line-1" id="markdown-toc-cache-line-1">7.3 Cache Line利用率不足</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="section">1. 存储器的层级结构</h2>
+
+<p>计算机的存储结构一般分为4层</p>
+
+<p>按照访问速度排序为：<script type="math/tex">寄存器>缓存>内存>磁盘</script></p>
+
+<p>按照价格排序为：<script type="math/tex">寄存器>缓存>内存>磁盘</script></p>
+
+<p>一般的计算机系统中，容量关系为<script type="math/tex">% <![CDATA[
+寄存器<缓存<内存<磁盘 %]]></script></p>
+
+<p>如果让CPU直接操作内存，内存的访问速度会成为性能瓶颈，为了解决这个问题，在CPU与内存中加入一个缓存，缓存的速度和CPU接近，但容量比内存小很多。</p>
+
+<p>CPU访问内存时，首先会检查是否已在缓存，如果在缓存中，则直接访问缓存，否则从内存中将数据复制到缓存中</p>
+
+<p>由于内存的访问速度的发展远远慢于CPU的发展速度，因此这个层次结构会越来越重要</p>
+
+<p>在这样的层级结构中，我们需要为缓存设计一个策略，能够预知CPU接下来要访问的是哪片内存</p>
+
+<p>显然我们是无法预知未来的，但我们可以进行一些猜测</p>
+
+<p>对于一般的程序而言，其有两个特性</p>
+
+<ul>
+  <li>时间局部性：如果信息正在被访问，那么近期很可能再次被访问</li>
+  <li>空间局部性：在最近的将来要用到的信息很可能与现在正在使用的信息在空间地址上是邻近的</li>
+</ul>
+
+<p>缓存策略的设计以这两个特性为根本依据</p>
+
+<p>虽然这两个特性没有理论证明，但经验告诉我们，这是正确的</p>
+
+<h2 id="cache-line">2. Cache Line</h2>
+
+<p>缓存从主存读取数据时，并不会单独读取一个字或者一个字节，事实上根据空间局部性，也应该读取地址邻近的数据，但如果一次读取的过多，缓存会很快塞满，频繁地淘汰缓存数据也不利于性能。</p>
+
+<p>因此单次从内存中读取的数据多少是一个经验值，称为Cache Line，是内存与缓存之间每次数据交换的最小单位，通常为16字节或32字节。</p>
+
+<p>这里提一下，磁盘与内存之间每次数据交换的最小单位称为页。</p>
+
+<h2 id="section-1">3. 映射策略</h2>
+
+<p>为了完成缓存的功能，对于内存地址我们需要找到其在缓存中的对应地址</p>
+
+<h3 id="section-2">3.1 直接映射</h3>
+
+<p>如果Cache的大小是Cache Line的<script type="math/tex">m</script>倍，则可将Cache划分为<script type="math/tex">m</script>块，编号为<script type="math/tex">0,1,2,...,m-1</script></p>
+
+<p>设定内存的大小是缓存的M倍，则可分区为<script type="math/tex">0,1,2,...,M-1</script></p>
+
+<p>每个区内部分块<script type="math/tex">0,1,2,...,m-1</script></p>
+
+<p>对于内存中区号为<script type="math/tex">i</script>，块号为<script type="math/tex">j</script>的Cache Line，其对应的缓存地址为<script type="math/tex">j</script>块</p>
+
+<p>在这种情况下，对于缓存中每个Cache Line只需登记其对应的内存区号</p>
+
+<p>CPU访问内存地址时，先找到其对应的缓存块号，然后核对登记的区是否一致，一致则为hit，否则miss</p>
+
+<p>因为每块内存对应的缓存地址都固定，因此命中率较低，但是映射简单，可以得到比较快的存取速度，适合大容量缓存。</p>
+
+<h3 id="section-3">3.2 全相联映射</h3>
+
+<p>缓存仍然分块，编号<script type="math/tex">0,1,2,...,m-1</script></p>
+
+<p>内存不分区，直接分块，编号<script type="math/tex">0,1,2,...,M-1</script></p>
+
+<p>内存的任何块可以映射到缓存的任何块</p>
+
+<p>此时，每个缓存块号都要登记对应的内存块号</p>
+
+<p>CPU访问内存地址时，并行地与缓存中所有块号进行比较，找到一个则为hit，否则miss</p>
+
+<p>这种方式比直接映射命中率高，但缺点也很明显，每次访问时都要与缓存中所有的块进行比较，适合小容量的缓存。</p>
+
+<h3 id="section-4">3.3 组相联映射</h3>
+
+<p>组相联映射是直接映射与全相联映射核心思想的结合</p>
+
+<p>缓存分组，组编号<script type="math/tex">0,1,2,...,C-1</script></p>
+
+<p>缓存的每个组包含相等数量的块，组内的块编号<script type="math/tex">0,1,2,...,G-1</script></p>
+
+<p>内存首先分区，每个区和缓存大小一致，区号<script type="math/tex">0,1,2,...,M-1</script></p>
+
+<p>每个区和缓存一样分组分块</p>
+
+<p>内存的每个区内的编号为<script type="math/tex">j</script>的组对应于缓存编号为<script type="math/tex">j</script>的组，这是一种直接映射关系</p>
+
+<p>内存的组和对应的缓存的组包含的块可以任意映射，这是一种全相联映射</p>
+
+<p>对于特定的内存地址，首先根据其在区内的组号，找到缓存中对应的组，然后将该缓存组的所有块与当前内存块编号比较，若找到一致的，则为hit，否则miss</p>
+
+<p>此时，对于缓存中的每个块都记录对应的内存区号和组内块号</p>
+
+<h2 id="section-5">4. 替换策略</h2>
+
+<p>在全相联映射和组相联映射中，当Cache或者某个Cache组已经塞满，但需要调入新的内存块（Cache Line）时，需要选择一个已有的缓存块进行替换</p>
+
+<p>常用的算法有以下三种</p>
+
+<ul>
+  <li>先进先出：选择在缓存中停留最长时间的块替换，此方法开销小，但没有结合局部性原理，命中率相对较低</li>
+  <li>最近最少使用：选择上一次使用最远的块替换，符合局部性原理，命中率较高</li>
+  <li>随机法：随机替换</li>
+</ul>
+
+<h2 id="section-6">5. 更新策略</h2>
+
+<p>缓存中有着主存部分的拷贝，当CPU对缓存进行写操作时，显然也应更新对应的内存块</p>
+
+<p>这当中有两种策略</p>
+
+<ul>
+  <li>全写法：在缓存被修改时对内存中的相应内容进行更新</li>
+  <li>写回法：在缓存副本被替换时才对内存中的相应内容进行更新</li>
+</ul>
+
+<p>显然，写回法产生的调度少，速度高。但除了CPU外，现代计算机系统中磁盘或者网络这样的输入输出设备可以直接对主存进行写操作，若采用写回法，内存中过时的数据可能会被当成最新的数据来使用。</p>
+
+<p>因此，实际的计算机系统一般采用全写法。</p>
+
+<p>在实际的场景中，全写法的弊端会被两个事实削弱</p>
+
+<ul>
+  <li>根据经验，CPU读操作的次数是写操作次数的两倍</li>
+  <li>CPU可以异步写</li>
+</ul>
+
+<h2 id="section-7">6. 多级缓存</h2>
+
+<p>计算机系统中的缓存通常都有三级，称为一级缓存，二级缓存，三级缓存</p>
+
+<p>符合一般规律，速度递减，价格递增</p>
+
+<p>由于计算机指令普遍符合“顺序执行”的特性，一条指令被执行后，下一条指令紧接着执行，因此指令相比数据具有更好的局部性。并且指令永远不会被重写。</p>
+
+<p>由于这些特点，对于数据和指令的缓存设计策略会有差异。</p>
+
+<p>在一级缓存中，指令和数据通常在相互独立的不同缓存中。有时二、三级缓存也会这样。</p>
+
+<h2 id="cache">7. Cache友好的程序</h2>
+
+<p>了解了Cache的基本原理后，我们设计程序的时候应该尽可能对Cache友好，比如尽可能符合空间/时间局部性。</p>
+
+<p>下面列举一些Cache不友好的例子。</p>
+
+<h3 id="section-8">7.1 指令缓存溢出</h3>
+
+<p>考虑循环体</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// code
+</span><span class="p">}</span>
+</code></pre>
+</div>
+
+<p>对于这个循环体，如果其指令可恰好全部被装进一级指令缓存，那么在执行这部分指令时，对指令的访问可以达到最高效率</p>
+
+<p>但此时如果循环体内的<code class="highlighter-rouge">code</code>再多一句指令，哪怕只是运算非常少的一句指令，便会引发一级指令缓存的频繁替换淘汰，性能因此大大降低。</p>
+
+<p>解决方法就是分拆循环体，但实际中只在确认性能瓶颈是这个原因之后再进行操作</p>
+
+<h3 id="section-9">7.2 缓存冲突</h3>
+
+<p>设定场景为组相联映射</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="n">a</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
+<span class="kt">int</span> <span class="n">b</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
+<span class="kt">int</span> <span class="n">c</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>假设三个数组正好是三个Cache Line，且对应于同一个缓存的组</p>
+
+<p>组内只有2个块的容量</p>
+
+<p>那么我们看看这个程序执行时会发生什么</p>
+
+<ol>
+  <li>初始该缓存的组没有内容</li>
+  <li>访问a[0]，此时会将a块塞入缓存</li>
+  <li>访问b[0]，此时会将b块塞入缓存</li>
+  <li>访问c[0]，此时a块被c块替换</li>
+  <li>访问a[1]，此时b块被a块替换</li>
+  <li>…</li>
+</ol>
+
+<p>这种情况简直就是缓存策略的灾难</p>
+
+<h3 id="cache-line-1">7.3 Cache Line利用率不足</h3>
+
+<p>其实7.2节也算是Cache Line利用率不足</p>
+
+<p>看另一个例子</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="n">a</span><span class="p">[</span><span class="n">M</span><span class="p">][</span><span class="n">N</span><span class="p">];</span>
+<span class="kt">int</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">M</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">sum</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">];</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>如果a表示矩阵的话，上面的代码就是按列访问了</p>
+
+<p>这样对缓存非常不友好</p>
+
+<p>访问<script type="math/tex">a[0][0]</script>后,<script type="math/tex">a[0][1]</script>已经在缓存中了，但是程序却访问很可能不在缓存中的<script type="math/tex">a[1][0]</script></p>

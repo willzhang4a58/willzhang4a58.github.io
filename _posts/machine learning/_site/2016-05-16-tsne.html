@@ -1,0 +1,207 @@
+<ul id="markdown-toc">
+  <li><a href="#sne" id="markdown-toc-sne">1. SNE</a></li>
+  <li><a href="#sne-1" id="markdown-toc-sne-1">2. 对称SNE</a></li>
+  <li><a href="#t-sne" id="markdown-toc-t-sne">3. t-SNE理论</a></li>
+  <li><a href="#t-sne-1" id="markdown-toc-t-sne-1">4. t-SNE优化</a></li>
+  <li><a href="#t-sne-2" id="markdown-toc-t-sne-2">5. 大规模t-SNE</a>    <ul>
+      <li><a href="#section" id="markdown-toc-section">5.1 稀疏化高维相似度计算</a></li>
+      <li><a href="#section-1" id="markdown-toc-section-1">5.2 梯度估计</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="sne">1. SNE</h2>
+
+<p>SNE的功能是将高维数据降维到可进行绘图的2维或3维空间中。</p>
+
+<p>SNE首先将数据点之间的高维欧式距离转换为表示相似度的条件概率。</p>
+
+<p>使用符号<script type="math/tex">p_{j \\| i}</script>表示对于数据点<script type="math/tex">x_i</script>，数据点<script type="math/tex">x_j</script>与其的相似度。</p>
+
+<p>SNE设定这个相似度服从以<script type="math/tex">x_i</script>为中心的高斯分布，且标准差为<script type="math/tex">{\sigma}_i</script>。</p>
+
+<p>因此，<script type="math/tex">p_{j\\|i}</script>的计算式如下</p>
+
+<p>\begin{align}
+p_{j|i}=\frac{\exp(-{ || x_i-x_j || }^2_2/2{\sigma}_i^2)}{\sum\limits_{k\neq i}\exp(-{|| x_i-x_k || }_2^2/2{\sigma}_i^2)}
+\end{align}</p>
+
+<p>为了方便，将<script type="math/tex">p_{i\\|i}</script>设定为0。</p>
+
+<p>对于数据点<script type="math/tex">x_i</script>和<script type="math/tex">x_j</script>，其在低维空间对应的数据点为<script type="math/tex">y_i</script>和<script type="math/tex">y_j</script>。</p>
+
+<p>在低维空间中，同样能够计算一个条件概率形式的相似度<script type="math/tex">q_{j\\|i}</script>。</p>
+
+<p>与在高维空间中不同，理想的低维空间是分布均匀的，因此低维空间中的高斯分布的标准差设定为固定值<script type="math/tex">\frac{1}{\sqrt{2}}</script>，<script type="math/tex">q_{j\\|i}</script>的计算式如下</p>
+
+<p>\begin{align}
+q_{j|i}=\frac{\exp(-{ || y_i-y_j || }^2_2)}{\sum\limits_{k\neq i}\exp(-{ || y_i-y_k || }^2_2)}
+\end{align}</p>
+
+<p>同样，将<script type="math/tex">q_{i\\|i}</script>设定为0。</p>
+
+<p>理想情况下，<script type="math/tex">p_{i\\|i}</script>与<script type="math/tex">q_{i\\|i}</script>应相等，SNE的目标便是最小化<script type="math/tex">p_{i\\|i}</script>与<script type="math/tex">q_{i\\|i}</script>的差异。</p>
+
+<p>SNE使用所有数据点上的KL距离之和作为cost function</p>
+
+<p>以高维数据点<script type="math/tex">x_i</script>为中心的概率分布使用符号<script type="math/tex">P_i</script>表示。</p>
+
+<p>以低维数据点<script type="math/tex">y_i</script>为中心的概率分布使用符号<script type="math/tex">Q_i</script>表示。</p>
+
+<p>损失函数C如下</p>
+
+<p>\begin{align}
+C=\sum\limits_i KL(P_i || Q_i)=\sum\limits_i \sum\limits_j p_{j|i}log\frac{p_{j|i}}{q_{j|i}}
+\end{align}</p>
+
+<p>损失函数的计算式中，高维空间中以每个数据点为中心的高斯分布的标准差<script type="math/tex">{\sigma}_i</script>尚未确定。</p>
+
+<p>与低维空间中不同，高维空间由于分布不均匀，不适合使用同一个标准差。对于每个数据点<script type="math/tex">x_i</script>，以其为中心的概率分布为为<script type="math/tex">P_i</script>，这个概率分布的熵<script type="math/tex">H(P_i)</script>如下</p>
+
+<p>\begin{align}
+H(P_i)=-\sum\limits_j p_{j|i}{log}_2p_{j|i}
+\end{align}</p>
+
+<p>对于概率分布<script type="math/tex">P_i</script>，定义一个松散度<script type="math/tex">Perp(P_i)</script>如下</p>
+
+<p>\begin{align}
+Perp(P_i)=2^{H(P_i)}
+\end{align}</p>
+
+<p>对于以每个数据点为中心的高斯分布，其标准差决定了概率分布的熵，进而决定了松散度。</p>
+
+<p>通过设定统一的松散度，确定了每个数据点与松散度对应的标准差。</p>
+
+<p>松散度通常的值为5和50之间。</p>
+
+<p>SNE使用梯度下降的方法完成对损失函数的最小化，梯度如下</p>
+
+<p>\begin{align}
+\frac{\delta C}{\delta y_i}=2\sum\limits_j (p_{j|i}-q_{j|i}+p_{i|j}-q_{i|j})(y_i-y_j)
+\end{align}</p>
+
+<p>初始时，低维数据点可以从以原点为中心，方差小的高斯分布中选取。</p>
+
+<h2 id="sne-1">2. 对称SNE</h2>
+
+<p>除了使用条件概率外，还可使用联合概率分布，同样使用KL距离之和作为损失函数，如下</p>
+
+<p>\begin{align}
+C=KL(P||Q)=\sum\limits_i\sum\limits_jp_{ij}log\frac{p_{ij}}{q_{ij}}
+\end{align}</p>
+
+<p>由于对于任意的i和j，都有<script type="math/tex">p_{ij}=p_{ji}</script>和<script type="math/tex">q_{ij}=q_{ji}</script>，因此称为对称SNE。</p>
+
+<p>对称SNE中，低维数据点的相似度的计算式如下</p>
+
+<p>\begin{align}
+q_{ij}=\frac{\exp(-{||y_i-y_j||}_2^2)}{\sum\limits_{k\neq l}\exp(-{||y_k-y_l||}_2^2)}
+\end{align}</p>
+
+<p>使用符号n代表高维数据点的个数。</p>
+
+<p>为了防止离群点对于损失函数的影响过小，高维数据点的相似度的计算式如式(9)。</p>
+
+<p>\begin{align}
+p_{ij}=\frac{p_{j\|i} + p_{i\|j}}{2n}
+\end{align}</p>
+
+<p>对称SNE的梯度如下</p>
+
+<p>\begin{align}
+\frac{\delta C}{\delta y_i}=4\sum\limits_j(p_{ij}-q_{ij})(y_i-y_j)
+\end{align}</p>
+
+<h2 id="t-sne">3. t-SNE理论</h2>
+
+<p>为了改善数据可视化的拥挤问题。
+t-SNE在高维空间中仍使用高斯分布将距离转换为相似度，但在低维空间中使用重尾分布来将距离转换为相似度，这个重尾分布就是一个自由度的t分布。</p>
+
+<p>于是，得到t-SNE中<script type="math/tex">q_{ij}</script>的计算式，如下</p>
+
+<p>\begin{align}
+q_{ij}=\frac{(1+||y_i-y_j||^2_2)^{-1}}{\sum\limits_{k\neq l}(1+||y_k-y_l||^2_2)^{-1}}
+\end{align}</p>
+
+<p>梯度如下</p>
+
+<p>\begin{align}
+\frac{\delta C}{\delta y_i}=4\sum\limits_j(p_{ij}-q_{ij})(y_i-y_j)(1+||y_i-y_j||^2_2)^{-1}
+\end{align}</p>
+
+<h2 id="t-sne-1">4. t-SNE优化</h2>
+
+<ul>
+  <li>early compression
+    <ul>
+      <li>方法: 使低维数据点在迭代初期保持较近的距离</li>
+      <li>优点: 距离较近时，易于全局结构，簇的形成</li>
+      <li>实现:  给每个数据点的梯度，加上一个与其初始点之间的L2惩罚</li>
+    </ul>
+  </li>
+  <li>early exaggeration
+    <ul>
+      <li>方法: 初期，使每个<script type="math/tex">p_ij</script>乘以一个大于1的正数，比如4</li>
+      <li>优点: 使得优化更偏向于拟合大值的<script type="math/tex">p_{ij}</script>，易于全局结构，簇的形成</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="t-sne-2">5. 大规模t-SNE</h2>
+
+<h3 id="section">5.1 稀疏化高维相似度计算</h3>
+
+<p>对于每个数据点<script type="math/tex">x_i</script>，找到其最近的u个点（VP树），作为一个集合<script type="math/tex">N_i</script>，并重新定义以其为中心的相似度计算式如下</p>
+
+<p>\begin{align}
+p_{j|i}= \left\{
+\begin{aligned}
+\frac{\exp (-||x_i-x_j||^2_2/2\sigma_i^2)}{\sum\limits_{k \in N_i}exp(-||x_i-x_k||^2_2/2\sigma_i^2)} \quad &amp; if   j \in N_i \\
+0 \quad &amp; otherwise
+\end{aligned}
+\right.
+\end{align}</p>
+
+<h3 id="section-1">5.2 梯度估计</h3>
+
+<p>定义
+\begin{align}
+Z=\sum\limits_{k\neq l}(1+||y_k-y_l||_2^2)^{-1}
+\end{align}</p>
+
+<p>对t-SNE的梯度计算式转换形式。</p>
+
+<p>\begin{align}
+\frac{\delta C}{\delta y_i} =4(\sum\limits_j(p_{ij}q_{ij})(y_i-y_j)Z-\sum\limits_j(q_{ij}q_{ij})(y_i-y_j)Z)
+\end{align}</p>
+
+<p>定义</p>
+
+<p>\begin{align}
+A=\sum\limits_j(p_{ij}q_{ij})(y_i-y_j)Z \\
+B=\sum\limits_j(q_{ij}q_{ij})(y_i-y_j)Z
+\end{align}</p>
+
+<p>A项由于<script type="math/tex">p_{ij}</script>是稀疏的，可以很快地计算完毕</p>
+
+<p>对于数据点<script type="math/tex">y_i,y_j,y_k</script>，如果满足</p>
+
+<p>\begin{align}
+||y_i-y_j|| \approx ||y_i-y_k|| \gg ||y_j-y_k||
+\end{align}</p>
+
+<p>又有</p>
+
+<p>\begin{align}
+B=\frac{BZ}{Z}=\frac{\sum_j(1+||y_i-y_j||^2_2)^{-2}(y_i-y_j)}{Z}
+\end{align}</p>
+
+<p>由上式可以看出，<script type="math/tex">y_j</script>和<script type="math/tex">y_k</script>对<script type="math/tex">\frac{\delta C}{\delta y_i}</script>的影响几乎相等</p>
+
+<p>使用Barnes-Hut近似</p>
+
+<ol>
+  <li>构建四叉树或者八叉树</li>
+  <li>对每个低维数据点，遍历树节点，如满足近似条件，将该树节点内所有低维数据点视为该树节点的中心点，计算BZ。遍历完成后，得到Z，使用BZ/Z得到B项</li>
+</ol>
+

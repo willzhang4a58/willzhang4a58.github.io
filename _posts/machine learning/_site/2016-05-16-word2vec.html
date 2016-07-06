@@ -1,0 +1,217 @@
+<ul id="markdown-toc">
+  <li><a href="#section" id="markdown-toc-section">1. 基本符号定义</a></li>
+  <li><a href="#hierarchical-softmax" id="markdown-toc-hierarchical-softmax">2. Hierarchical Softmax</a>    <ul>
+      <li><a href="#cbow" id="markdown-toc-cbow">2.1 CBOW</a>        <ul>
+          <li><a href="#section-1" id="markdown-toc-section-1">2.1.1 预处理和符号定义</a></li>
+          <li><a href="#section-2" id="markdown-toc-section-2">2.1.2 优化目标</a></li>
+          <li><a href="#section-3" id="markdown-toc-section-3">2.1.3 模型</a></li>
+          <li><a href="#section-4" id="markdown-toc-section-4">2.1.3 梯度</a></li>
+        </ul>
+      </li>
+      <li><a href="#skip-gram" id="markdown-toc-skip-gram">2.2 Skip-gram</a>        <ul>
+          <li><a href="#section-5" id="markdown-toc-section-5">2.2.1 预处理和符号定义</a></li>
+          <li><a href="#section-6" id="markdown-toc-section-6">2.2.2 梯度</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#negative-sampling" id="markdown-toc-negative-sampling">3. Negative Sampling</a>    <ul>
+      <li><a href="#cbow-1" id="markdown-toc-cbow-1">3.1 CBOW</a></li>
+      <li><a href="#skip-gram-1" id="markdown-toc-skip-gram-1">3.2 Skip-gram</a></li>
+      <li><a href="#section-7" id="markdown-toc-section-7">3.3 负采样算法</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="section">1. 基本符号定义</h2>
+
+<ul>
+  <li>w：词库中的单词;</li>
+  <li>Context(w): 特定句子中w的上下文;</li>
+  <li>v(w): w的词向量，即最终结果;</li>
+  <li>m: 词向量的维数;</li>
+  <li>C: 语料;</li>
+  <li>D: 词库。</li>
+</ul>
+
+<h2 id="hierarchical-softmax">2. Hierarchical Softmax</h2>
+
+<h3 id="cbow">2.1 CBOW</h3>
+
+<h4 id="section-1">2.1.1 预处理和符号定义</h4>
+
+<p>对于语料中的每一个单词w，取在其之前的c个单词和之后的c个单词作为Context(w)，将数据保存为二元组形式(w, Context(w))。</p>
+
+<p>对于语料中的所有单词，按照出现频率构建哈夫曼树，使得频率较高的单词距离根节点较近，频率较低的单词距离根节点较远。</p>
+
+<p>对于哈夫曼树，每个叶节点与一个单词对应。</p>
+
+<p>对于单词w，有：</p>
+
+<ul>
+  <li><script type="math/tex">p^w</script>: 从根节点出发到达w对应叶节点的路径</li>
+  <li><script type="math/tex">l^w</script>: <script type="math/tex">p^w</script>中包含节点的个数</li>
+  <li><script type="math/tex">p_i^w</script>: <script type="math/tex">p^w</script>的第i个节点，根节点为第1个节点，叶节点为最后一个节点</li>
+  <li><script type="math/tex">d_i^w</script>: <script type="math/tex">p^w</script>中第i个节点对应的哈夫曼编码，根节点不对应编码</li>
+</ul>
+
+<h4 id="section-2">2.1.2 优化目标</h4>
+
+<p>对于二元组(w, Context(w))，CBOW模型根据Context(w)预测w。</p>
+
+<p>优化目标为最大化对数似然函数
+\begin{align}
+\zeta = \sum\limits_{w\in C} \log p(w|Context(w))
+\end{align}</p>
+
+<h4 id="section-3">2.1.3 模型</h4>
+
+<p>在CBOW模型中，Context(w)在CBOW模型中为2c个单词，将这2c个单词的词向量累加，得到向量<script type="math/tex">X_w</script>。</p>
+
+<p>为了方便后续处理，给<script type="math/tex">X_w</script>扩充一维，数值为1，位置在第一维。</p>
+
+<p>对于单词w，从根节点出发到达该单词代表的叶节点，中间经过的每一个非叶节点，都视为一个逻辑回归二分类器，分类结果对应左右子节点。</p>
+
+<p>约定：分到左边为0类（编码0），分到右边是1类（编码1）。</p>
+
+<p>哈夫曼树的叶节点为所有单词，非叶节点视为一个逻辑回归二分类器。
+定义<script type="math/tex">\theta_i^w</script>为<script type="math/tex">p^w</script>中第i个节点对应的参数向量，不包括叶节点。
+得到
+\begin{align}
+p(w|Context(w))=\prod\limits_{i=2}^{l^w}p(d_i^w|X_w, \theta_{i-1}^w)
+\end{align}</p>
+
+<p>使用符号g代表sigmoid函数，有</p>
+
+<p>\begin{align}
+p(d_i^w|X_w, \theta_{i-1}^w) = \left\{ \begin{aligned}
+1-g(X_w^T\theta_{i-1}^w) \quad &amp; d_i^w = 0 \\
+g(X_w^T\theta_{i-1}^w) \quad &amp; d_i^w = 1
+\end{aligned} \right.
+\end{align}</p>
+
+<p>为了方便，上式变形为</p>
+
+<p>\begin{align}
+p(d_i^w|X_w, \theta_{i-1}^w)=[1-g(X_w^T\theta_{i-1}^w)]^{1-d_i^w}[g(X_w^T\theta_{i-1}^w)]^{d_i^w}
+\end{align}</p>
+
+<h4 id="section-4">2.1.3 梯度</h4>
+
+<p>将上式代入到优化目标中，得到</p>
+
+<p>\begin{align}
+\zeta=\sum\limits_{w\in C}\sum\limits_{i=2}^{l^w}{(1-d_i^w)log[1-g(x_w^T\theta_{i-1}^w)]+d_i^wlog[g(x_w^T\theta_{i-1}^w)]}
+\end{align}</p>
+
+<p>令
+\begin{align}
+J={(1-d_i^w)log[1-g(x_w^T\theta_{i-1}^w)]+d_i^wlog[g(x_w^T\theta_{i-1}^w)]}
+\end{align}
+求导，得</p>
+
+<p>\begin{align}
+\frac{\sigma J}{\sigma \theta_{i-1}^w} &amp;= [d_i^w-g(x_w^T\theta_{i-1}^w)]X_w \\
+\frac{\sigma J}{\sigma X_w} &amp;= [d_i^w-g(x_w^T\theta_{i-1}^w)]\theta_{i-1}^w
+\end{align}</p>
+
+<h3 id="skip-gram">2.2 Skip-gram</h3>
+
+<h4 id="section-5">2.2.1 预处理和符号定义</h4>
+
+<p>同CBOW。</p>
+
+<h4 id="section-6">2.2.2 梯度</h4>
+
+<p>对于二元组(w, Context(w))，Skip-gram模型根据w预测Context(w)。</p>
+
+<p>优化目标为最大化对数似然函数
+\begin{align}
+\zeta = \sum\limits_{w\in C} \log p(Context(w)|w)
+\end{align}</p>
+
+<p>其中</p>
+
+<p>\begin{align}
+p(Context(w)|w) = \prod\limits_{u\in Context(w)}p(u|w)
+\end{align}</p>
+
+<p>且</p>
+
+<p>\begin{align}
+p(u|w)=\prod\limits_{i=2}^{l^u}p(d_i^u|v(w),\theta_{i-1}^u)=\prod\limits_{i=2}^{l^u}[1-g({v(w)}^T\theta_{i-1}^u)]^{1-d_i^u}[g({v(w)}^T\theta_{i-1}^u)]^{d_i^u}
+\end{align}</p>
+
+<p>回代得到</p>
+
+<p>\begin{align}
+\zeta=\sum\limits_{w\in C}\sum\limits_{u\in Context(w)}\sum\limits_{i=2}^{l^u}(1-d_i^u)log[1-g({v(w)}^T\theta_{i-1}^u)]+d_i^ulog[g({v(w)}^T\theta_{i-1}^u)]
+\end{align}</p>
+
+<p>令</p>
+
+<p>\begin{align}
+J = (1-d_i^u)log[1-g({v(w)}^T\theta_{i-1}^u)]+d_i^ulog[g({v(w)}^T\theta_{i-1}^u)]
+\end{align}</p>
+
+<p>求导</p>
+
+<p>\begin{align}
+\frac{\sigma J}{\sigma \theta_{i-1}^u} &amp;= [d_i^u-g({v(w)}^T\theta_{i-1}^u)]v(w) \\
+\frac{\sigma J}{\sigma v(w)} &amp;= [d_i^u-g({v(w)}^T\theta_{i-1}^u)]\theta_{i-1}^u
+\end{align}</p>
+
+<h2 id="negative-sampling">3. Negative Sampling</h2>
+
+<h3 id="cbow-1">3.1 CBOW</h3>
+
+<p>根据Context(w)预测w，对于给定的二元组(w, Context(w))，这是一个正样本，其余的词就是负样本。</p>
+
+<p>由于负样本数量较大，只选取其中的一个子集，具体的选取在3.3节中讲述。</p>
+
+<p>假设对于w有一个选取好的负样本集NEG(w)。</p>
+
+<p>Negative Sampling没有哈夫曼树，重新定义<script type="math/tex">\theta</script>符号。</p>
+
+<p><script type="math/tex">\theta^w</script>为词w对应的一个辅助向量，为待训练参数。</p>
+
+<p>定义<script type="math/tex">g(X_w^T\theta^u)</script>为当上下文为Context(w)时，预测中心词为u的概率。</p>
+
+<p>最大化目标函数为</p>
+
+<p>\begin{align}
+\zeta=\sum\limits_{w\in C}\left\{log[g(X_w^T\theta^w)]+\sum\limits_{u\in NEG(w)}log[1-g(X_w^T\theta^u)]\right\}
+\end{align}</p>
+
+<p>使上式最大化，也就是最大化正样本概率的同时最小化负样本概率。</p>
+
+<p>令</p>
+
+<p>\begin{align}
+J=log[g(X_w^T\theta^w)]+\sum\limits_{u\in NEG(w)}log[1-g(X_w^T\theta^u)]
+\end{align}</p>
+
+<p>求导，得</p>
+
+<p>\begin{align}
+\frac{\sigma J}{\sigma X_w} &amp;= [1-g(X_w^T\theta^w)]\theta^w-\sum\limits_{u\in NEG(w)}g(X_w^T\theta^u)\theta^u \\
+\frac{\sigma J}{\sigma \theta^w} &amp;=[1-g(X_w^T\theta^w)]X_w \\
+\frac{\sigma J}{\sigma \theta^u} &amp;= -g(X_w^T\theta^u)X_w
+\end{align}</p>
+
+<h3 id="skip-gram-1">3.2 Skip-gram</h3>
+
+<p>优化目标
+\begin{align}
+\zeta=\sum\limits_{w\in C}\sum\limits_{u\in Context(w)}\left\{log[g({v(w)}^T\theta^u)]+\sum\limits_{z\in NEG(u)}log[1-g({v(w)}^T\theta^z)]\right\}
+\end{align}</p>
+
+<h3 id="section-7">3.3 负采样算法</h3>
+
+<p>带权采样，语料中的频率越大，词的选取概率越大。
+Google的word2vec中的概率为</p>
+
+<p>\begin{align}
+\frac{counter(w)^{\frac{3}{4}}}{\sum\limits_{u\in D}counter(u)^{\frac{3}{4}}}
+\end{align}</p>
+
