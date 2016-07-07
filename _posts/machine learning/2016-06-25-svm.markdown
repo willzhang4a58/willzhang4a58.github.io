@@ -119,7 +119,7 @@ w,b=\mathop{argmin}\_{w,b}\lambda\vert \vert w\vert \vert ^2+\frac{1}{n}\sum\_{i
 
 原求解目标等价于$$\mathop{argmin}_{w,b}\mathop{argmax}_{\mu_i\geq0,\nu_i\geq 0} \Lambda$$
 
-这里满足KKT条件，因此等价于对偶目标$$\mathop{argmax}_{\mu_i\geq0,\nu_i\geq 0}\mathop{argmin}_{w,b} \Lambda$$
+这里满足Slater条件，因此等价于对偶目标$$\mathop{argmax}_{\mu_i\geq0,\nu_i\geq 0}\mathop{argmin}_{w,b} \Lambda$$
 
 先求$$\mathop{argmin}_{w,b}\Lambda$$
 
