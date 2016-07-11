@@ -48,5 +48,3 @@ $$Z$$用于保证
 \begin{align}
 \hat{y} = \mathop{argmax}\_y p(y)\prod\_{i=1}^np(x\_i|y)
 \end{align}
-
-其实就是MAP
