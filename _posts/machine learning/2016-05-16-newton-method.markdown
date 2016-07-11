@@ -33,7 +33,7 @@ x^{m+1} = x^{m} - \frac{f(x^m)}{f^{'}(x^m)}
 
 \begin{align}x^{m+1} = x^{m} - \frac{f^{'}(x^m)}{f^{''}(x^m)}\end{align}
 
-将上式推广到多维，有
+将上式推广，有
 
 \begin{align}
 x^{m+1} = x^{m} - {[Hf(x^m)]}^{-1}\nabla f(x^m)
