@@ -15,37 +15,19 @@ layout: default
   <div class="col-sm-9">
     <div class="post-area ">
 	  <div class="post-list-header">
-	  Latest 30 Posts
+          {{ page.categories }}
 	  </div>
       <div class="post-list-body">
         <div class="all-posts" post-cate="All">
-            {% for post in site.posts limit:30 %}
+            {% for post in site.categories.[page.categories] %}
             <a class="post-list-item" href="{{ post.url | prepend: site.baseurl }}">
               <h2>
               {{ post.title }}
               </h2>
               <span class="">{{ post.date | date: "%b %-d, %Y" }}</span>
-            </a>
+          </a>
           {% endfor %}
         </div>
-        <!-- <div class="posts-in-categories"> -->
-        {% for category in site.categories %}
-          <div post-cate="{{category | first}}">
-            {% for posts in category  %}
-              {% for post in posts %}
-                {% if post.url %}
-                  <a href="{{ post.url }}" class="post-list-item">
-                    <h2>
-                    {{ post.title }}
-                    </h2>
-                    <span class="">{{ post.date | date: "%b %-d, %Y" }}</span>
-                  </a>
-                {% endif %}
-              {% endfor %}
-            {% endfor %}
-          </div>
-        {% endfor %}
-        <!-- </div> -->
       </div>
     </div>
   </div>

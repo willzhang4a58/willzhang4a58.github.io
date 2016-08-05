@@ -2,4 +2,4 @@
 layout: frontpage
 ---
 
-## Welcome
+{% include welcome.md %}
