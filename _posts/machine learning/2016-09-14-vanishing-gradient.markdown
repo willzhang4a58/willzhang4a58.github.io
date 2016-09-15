@@ -136,7 +136,7 @@ git clone https://github.com/mnielsen/neural-networks-and-deep-learning.git
 
 网络是被随机初始化的，所以各个neurons学习速度不一致符合预期。然而，从图中，还是能发现一个普遍规律，第二隐层的条大部分都比第一隐层的大很多。所以，第二隐层的学习速度会比第一隐层快很多。
 
-为了确认这是不是一个巧合，来做一下推导。
+我们需要确认这是不是一个巧合。
 
 使用$$\delta_j^l=\frac{\partial C}{\partial b_j^l}$$表示第$$l$$层的第$$j$$个neuron的梯度
 
