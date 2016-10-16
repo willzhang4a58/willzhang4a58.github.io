@@ -46,6 +46,7 @@ Node分为三类，如图
 但是其本身并没有接管网络，因此实际的Response和Message需要外部调用者告诉它
 
 首先看它的主要内部变量
+
 ```cpp
 RecvHandle recv_handle_; // 处理message的函数，recv_handle_(message)
 ThreadsafeQueue<Message> recv_queue_; // 线程安全的队列
@@ -61,6 +62,7 @@ std::vector<std::pair<int, int>> tracker_;
 ```
 
 当我们需要给一个Resquest计数的时候，使用
+
 ```cpp
 // recver表示接收者的node_id，ps-lite中一个整数可能对应于多个node_id，因此使用Postoffice解码获得所有的真实node_id
 int Customer::NewRequest(int recver) {
@@ -405,9 +407,10 @@ if (msg.meta.request) {
 }
 ```
 
-## 5. KVApp
+## 6. KVApp
 
 在ps-lite中，key和value是分开存储的，每个key可能对应多个value，因此需要记录每个key的长度
+
 ```cpp
 template <typename Val>
 struct KVPairs {
@@ -452,7 +455,7 @@ struct KVServerDefaultHandle {
 
 Worker中的push和pull操作都是异步返回一个ID，使用ID进行wait阻塞等待进行同步操作，或者异步调用时传入一个Callback进行后续操作
 
-## 6. 声明
+## 7. 声明
 
 本文为个人笔记，均是个人理解，如有错误，还请指正。
 
