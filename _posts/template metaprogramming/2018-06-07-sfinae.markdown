@@ -1,0 +1,173 @@
+---
+layout: post
+title:  "SFINAE"
+date: 2018-06-07 17:09:00 
+categories: Template&nbsp;Metaprogramming
+comments: true
+---
+
+* content
+{:toc}
+
+## 1. 条件特化
+
+SFINAE也就是 "Substitution Failure Is Not An Error" 的缩写。
+
+在实际的开发工作中，有时会有这样一个需求，条件特化。
+
+举一个例子，假设我要实现一个做数组加法的接口(支持整形与浮点数)，一般实现如下
+```cpp
+template<typename T>
+void Axpy(const int32_t n, const T* alpha, const T* x, T* y) {
+  for (int32_t i = 0; i < n; ++i) {
+    y[i] += alpha * x[i];
+  }
+}
+```
+而现在，假设存在一个第三方库(我们称为BLAS)，也实现了这个接口。
+
+并且做了一些特殊优化使得性能大幅提升，但是只支持浮点数，接口如下
+
+```cpp
+template<typename T> // static_assert(std::is_floating_point<T>::value, "");
+void BlasAxpy(const int32_t n, const T alpha, const T* x, T* y);
+```
+假设不使用SFINAE技术，要让我们自己实现的Axpy利用上BLAS优化，就不得不完全特化，如下
+```cpp
+template<typename T>
+void Axpy(const int32_t n, const T alpha, const T* x, T* y) {
+  for (int32_t i = 0; i < n; ++i) {
+    y[i] += alpha * x[i];
+  }
+}
+template<>
+void Axpy<float>(const int32_t n, const float alpha, const float* x, float* y) {
+  BlasAxpy(n, alpha, x, y);
+}
+template<>
+void Axpy<double>(const int32_t n, const double alpha, const double* x, double* y) {
+  BlasAxpy(n, alpha, x, y);
+}
+```
+可以看到，针对float与double，我们写了几乎一样的代码。
+
+虽然功能没有问题，但是不利于维护。
+
+那么，接下来我们就使用SFINAE的方法来避免重复工作吧。
+
+```cpp
+template<bool cond, class T = void>
+struct enable_if {};
+
+template<class T>
+struct enable_if<true, T> { using type = T; };
+
+template<typename T>
+typename enable_if<std::is_integral<T>::value>::type
+Axpy(const int32_t n, const T alpha, const T* x, T* y) {
+  for (int32_t i = 0; i < n; ++i) {
+    y[i] += alpha * x[i];
+  }
+}
+template<typename T>
+typename enable_if<std::is_floating_point<T>::value>::type
+Axpy(const int32_t n, const T alpha, const T* x, T* y) {
+  BlasAxpy(n, alpha, x, y);
+}
+```
+enable_if是标准库定义的帮助类型，为了避免跑题，这里我直接写了一个等价的实现
+
+上面这段代码做到了所谓的条件特化。
+
+在实现整形功能的同时，利用上了BLAS对于浮点类型的优化。并且，没有重复的代码。
+
+接下来，通过分析一次调用的编译过程来解释下这段代码的原理。
+
+比如这样的一个调用
+```cpp
+const int32_t n = 32;
+float x[n];
+float y[n];
+Axpy<float>(n, 1.0f, x, y);
+```
+编译器会寻找`Axpy<float>`的实现，那么假设首先尝试与下面的这个接口进行匹配
+```cpp
+template<typename T>
+typename enable_if<std::is_integral<T>::value>::type
+Axpy(const int32_t n, const T alpha, const T* x, T* y);
+```
+我们手工做一下模板参数的替换
+```cpp
+typename enable_if<std::is_integral<float>::value>::type
+Axpy(const int32_t n, const float alpha, const float* x, float* y);
+```
+而`std::is_integral<float>::value`的值显然是false，我们继续替换
+```cpp
+typename enable_if<false>::type
+Axpy(const int32_t n, const float alpha, const float* x, float* y);
+```
+到这里，编译器会发现`enable_if<false>`里面没有`type`的定义。
+
+这就发生了 "Substitution Failure" ，但是这种情况 "Is Not An Error"。
+
+所以编译器会尝试继续寻找`Axpy<float>`的实现，而不是报错退出
+之后，编译器尝试匹配
+```cpp
+template<typename T>
+typename enable_if<std::is_floating_point<T>::value>::type
+Axpy(const int32_t n, const T alpha, const T* x, T* y) {
+  BlasAxpy(n, alpha, x, y);
+}
+```
+我们仍然做一下模板参数替换
+```cpp
+typename enable_if<std::is_floating_point<float>::value>::type
+Axpy(const int32_t n, const float alpha, const float* x, float* y);
+```
+继续替换`std::is_floating_point<float>::value`的结果
+```cpp
+typename enable_if<true>::type
+Axpy(const int32_t n, const float alpha, const float* x, float* y);
+```
+根据之前的定义，`enable_if<true>::type`的结果是`void`，继续替换
+```cpp
+void Axpy(const int32_t n, const float alpha, const float* x, float* y);
+```
+到这里，没有出现任何错误，匹配成功。
+到这里，SFINAE的基本原理也已经解释清楚了。
+
+## 2. Failure or Error ?
+
+那么，什么时候算 "Substitution Failure" （SFINAE Error），什么时候才算 "compile error"呢
+
+根据cppreference的解释
+
+```txt
+Only the failures in the types and expressions in the immediate context of the function type or its template parameter types are SFINAE errors. If the evaluation of a substituted type/expression causes a side-effect such as instantiation of some template specialization, generation of an implicitly-defined member function, etc, errors in those side-effects are treated as hard errors.
+```
+
+function type和template parameter type很好理解，就是指函数返回类型，函数参数类型，模板参数类型。
+
+而限定 "immediate context"的意思是，假如尝试类型替换的过程中，发生了一些附带过程，比如模板特化,
+
+那么在这些附带过程里发生的错误会被视为编译错误。
+
+比如
+
+```cpp
+template <typename A>
+struct B {
+  using type = typename A::type;
+};
+template <typename T, typename U = typename B<T>::type>
+void foo();
+```
+假如`T`类型里没有定义`type`，那么进行`T`的替换时，触发了`B<T>`的特化（前文的side-effect），而在
+
+`B<T>`的特化过程中，又引用了`T::type`，导致`B<T>`特化失败，
+
+也就是side-effect内发生错误，这种错误会被直接视为编译错误，而不是SFINAE Error。
+
+## 3. 参考
+
+* https://en.cppreference.com/w/cpp/language/sfinae
