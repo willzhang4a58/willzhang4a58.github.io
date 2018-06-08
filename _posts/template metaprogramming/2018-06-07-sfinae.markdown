@@ -111,6 +111,7 @@ Axpy(const int32_t n, const float alpha, const float* x, float* y);
 这就发生了 "Substitution Failure" ，但是这种情况 "Is Not An Error"。
 
 所以编译器会尝试继续寻找`Axpy<float>`的实现，而不是报错退出
+
 之后，编译器尝试匹配
 ```cpp
 template<typename T>
