@@ -1,0 +1,95 @@
+---
+layout: post
+title:  "Future in C++11"
+date: 2018-06-11 16:05:00 
+categories: Multithread&nbsp;Programming
+comments: true
+---
+
+* content
+{:toc}
+
+c++11定义了一个future模块，其中比较关键的几个概念是
+
+* async
+* future, shared_future
+* promise, packaged_task
+
+本文不会对这些接口的详细用法做解释（cppreference讲得足够清楚了）
+
+本文只介绍本人对这个模块的一点理解
+
+## 1. async, future, shared_future
+
+首先通过一个例子快速理解一下什么是future
+
+```cpp
+#include <future>
+#include <vector>
+#include <iostream>
+
+int32_t ReduceSum(int32_t n, const int32_t* x) {
+  int32_t sum = 0;
+  for (int32_t i = 0; i < n; ++i) {
+    sum += x[i];
+  }
+}
+
+int32_t ParallelReduceSum(int32_t n, const int32_t* x) {
+  if (n == 0) { return 0; }
+  if (n == 1) { return *x; }
+  std::future<int32_t> left = std::async(ParallelReduceSum, n / 2, x);
+  std::future<int32_t> right = std::async(ParallelReduceSum, n - n / 2, x + n / 2);
+  return left.get() + right.get();
+}
+
+int main() {
+  std::vector<int32_t> x(1000, 1);
+  std::cout << ReduceSum(x.size(), x.data()) << std::endl;
+  std::cout << ParallelReduceSum(x.size(), x.data()) << std::endl;
+  return 0;
+}
+```
+
+上面的代码里, ReduceSum函数实现了简单的求和功能
+
+而ParallelReduceSum实现了一样的功能，并且利用了多核加速
+
+每次将求和任务拆分成两个更小的子任务，分别交给不同的线程（通过async函数）
+
+再将两个子任务的结果取回（通过future.get）并相加，得到结果然后返回
+
+值得注意的是
+
+* 假如调用get时，子任务没有完成，那么当前线程会阻塞等待
+* async并不一定会创建线程来执行子任务（当然也提供了选项强制创建线程），也有可能什么都不干。这种情况下，当有线程调用future.get时，由那个线程来执行子任务。当然，只会在第一次时会做一次计算，后面的get都是直接得到结果的。
+
+通过这个例子，可以看出，future是对异步操作的结果的抽象
+
+而async接口则比较像带返回值的thread接口
+
+标准里还定义了一个shared_future, 主要是因为future本身是不能拷贝的，导致只有一个线程能够获得future对象，也就只有一个线程能得到结果(future.get)，shared_future就是可以拷贝的future。
+
+## 2. promise, packaged_task
+
+async的异步是由于async内部创建的线程，这个线程不是我们能管理的。
+
+但有时候我们希望使用自己管理的线程（比如自己的线程池里的线程）来做事情，同时又想使用future
+
+这时候就需要用到promise和packaged_task了
+
+promise存储了一个变量（异步操作的结果），并提供了两个关键的方法
+
+* get_future，这个方法一般由需要读结果的线程调用，得到future，从而可以通过future.get得到异步操作的结果
+* set_value，这个方法则是由异步工作线程调用，设置异步操作的结果
+
+packaged_task存储了一个callable target，并提供了两个关键的方法
+
+* get_future，这个和promise一样
+* operator()，这个方法也是由异步工作线程调用，只是不像promise是简单的设个值，这里是执行一个定制的函数
+
+可以看出，packaged_task是高配版promise
+
+## 3. 参考
+
+* http://en.cppreference.com/w/cpp/thread
