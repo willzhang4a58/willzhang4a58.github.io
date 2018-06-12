@@ -17,7 +17,7 @@ public:
     Channel& operator = (const Channel&) = delete;
     Channel& operator = (Channel&&) = delete;
 
-    Channel(size_t capacity) : _val(capacity, 0),
+    Channel(size_t capacity) : _val(capacity),
                                _used_capacity(0),
                                _read_idx(0),
                                _write_idx(0),
