@@ -69,7 +69,7 @@ void PrintIndexSequence(std::index_sequence<indices...>) {
 }
 
 int main() {
-	PrintIndexSequence(std::make_index_sequence<100>());
+  PrintIndexSequence(std::make_index_sequence<100>());
   return 0;
 }
 ```
