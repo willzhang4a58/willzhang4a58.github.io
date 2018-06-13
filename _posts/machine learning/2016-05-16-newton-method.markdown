@@ -42,7 +42,7 @@ x^{m+1} = x^{m} - {[Hf(x^m)]}^{-1}\nabla f(x^m)
 H为Hessian矩阵，下面谈一下上式的收敛条件
 
 \begin{align}
-- {[Hf(x^m)]}^{-1}\nabla f(x^m) = x^{m+1} - x^{m}  \Longrightarrow \nabla f(x^m) = -\[Hf(x^m)\](x^{m+1} - x^{m})
+\- {[Hf(x^m)]}^{-1}\nabla f(x^m) = x^{m+1} - x^{m}  \Longrightarrow \nabla f(x^m) = -\[Hf(x^m)\](x^{m+1} - x^{m})
 \end{align}
 
 且
