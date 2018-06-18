@@ -18,7 +18,7 @@ class LockFreeStack {
   LockFreeStack() = default;
   ~LockFreeStack() = default;
 
-  void Push(T val) {
+  void Push(const T& val) {
     auto new_head = std::make_shared<Node>();
     new_head->val = val;
     new_head->next = nullptr;
